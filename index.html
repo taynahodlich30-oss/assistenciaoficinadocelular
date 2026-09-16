@@ -27,7 +27,6 @@
         .metric-value { display: block; font-size: 20px; font-weight: 800; color: #38bdf8; }
         .metric-label { font-size: 11px; color: #94a3b8; }
 
-        /* CARDS FINANCEIROS */
         .financial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
         .fin-card { background: #0f172a; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #334155; }
         .fin-value { display: block; font-size: 14px; font-weight: 700; }
@@ -52,11 +51,13 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         
         .os-card { background: #162238; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #1e293b; text-align: left; }
-        .os-card-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; color: #38bdf8; }
+        .os-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; color: #38bdf8; }
         .os-card p { font-size: 13px; color: #cbd5e1; margin-bottom: 5px; }
         
-        .os-card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
-        .btn-sm { padding: 8px; font-size: 11px; background: #334155; color: #fff; }
+        .status-select { width: auto; padding: 4px 8px; font-size: 12px; margin: 0; background: #0f172a; color: #38bdf8; font-weight: bold; border-color: #38bdf8; }
+
+        .os-card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; }
+        .btn-sm { padding: 8px 4px; font-size: 11px; background: #334155; color: #fff; }
         .btn-wa-orcamento { background: #eab308; color: #000; }
         .btn-wa-pronto { background: #22c55e; color: #fff; }
 
@@ -66,7 +67,14 @@
         canvas { background: #ffffff; border-radius: 8px; width: 100%; height: 120px; touch-action: none; margin-top: 5px; }
         .legal-disclaimer { font-size: 11px; color: #94a3b8; background: #0f172a; padding: 10px; border-radius: 8px; margin: 10px 0; text-align: justify; }
         .error-text { color: #ef4444; font-size: 13px; margin-top: 10px; }
-        .print-only { display: none; }
+        
+        /* REGRA DE IMPRESSÃO (OCULTA TUDO DO APP E MOSTRA SÓ O CUPOM) */
+        #printSection { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #printSection, #printSection * { visibility: visible; }
+            #printSection { display: block !important; position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -101,7 +109,6 @@
                 <div class="metric-card"><span class="metric-value" id="countProntos">0</span><span class="metric-label">Prontos</span></div>
             </section>
 
-            <!-- PAINEL FINANCEIRO -->
             <section class="financial-grid">
                 <div class="fin-card"><span class="fin-value fin-bruto" id="totalBruto">R$ 0</span><span class="metric-label">Bruto</span></div>
                 <div class="fin-card"><span class="fin-value fin-custo" id="totalCusto">R$ 0</span><span class="metric-label">Peças</span></div>
@@ -153,7 +160,7 @@
                 <label>Custo da Peça (R$)</label>
                 <input type="number" step="0.01" id="partCost" placeholder="Ex: 150.00">
 
-                <label>Status</label>
+                <label>Status Inicial</label>
                 <select id="serviceStatus" required>
                     <option value="Em orçamento">Em orçamento</option>
                     <option value="Em análise">Em análise</option>
@@ -177,7 +184,8 @@
         </div>
     </div>
 
-    <div id="printSection" class="print-only"></div>
+    <!-- Área exclusiva de Impressão -->
+    <div id="printSection"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
