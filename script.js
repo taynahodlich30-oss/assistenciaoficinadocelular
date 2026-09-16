@@ -1,9 +1,29 @@
 const SENHA_ACESSO = "123456";
 
-// Banco de dados em memória de Exemplo
+// Dados iniciais inspirados no print
 let ordensServico = [
-    { id: 1001, cliente: "Carlos Eduardo", telefone: "11999991111", aparelho: "iPhone 12", imei: "354128091234567", defeito: "Troca de tela", status: "Em Manutenção", valor: "450,00" },
-    { id: 1002, cliente: "Mariana Costa", telefone: "11988882222", aparelho: "Samsung S21", imei: "358741098765432", defeito: "Não carrega (conector)", status: "Em Análise", valor: "180,00" }
+    { 
+        id: "647636", 
+        cliente: "Jsjsje", 
+        telefone: "94949", 
+        aparelho: "Sbbsb", 
+        imei: "Wnnen", 
+        defeito: "Zbnsb", 
+        obs: "Snsnn", 
+        status: "Em reparo", 
+        valor: "799797,00" 
+    },
+    { 
+        id: "524781", 
+        cliente: "Test", 
+        telefone: "54646", 
+        aparelho: "iPhone 11", 
+        imei: "123456789", 
+        defeito: "Tela quebrada", 
+        obs: "Troca de vidro e touch", 
+        status: "Em análise", 
+        valor: "350,00" 
+    }
 ];
 
 function validarSenha() {
@@ -14,7 +34,7 @@ function validarSenha() {
         document.getElementById("loginScreen").style.display = "none";
         document.getElementById("appScreen").style.display = "block";
         error.innerText = "";
-        renderizarOS(ordensServico);
+        atualizarPainel();
     } else {
         error.innerText = "Senha incorreta!";
     }
@@ -26,59 +46,62 @@ function logout() {
     document.getElementById("passwordInput").value = "";
 }
 
-function renderizarOS(lista) {
-    const grid = document.getElementById("osList");
-    grid.innerHTML = "";
+function atualizarPainel() {
+    renderizarContadores();
+    renderizarListaOS(ordensServico);
+}
+
+function renderizarContadores() {
+    document.getElementById("countTotal").innerText = ordensServico.length;
+    document.getElementById("countAnalise").innerText = ordensServico.filter(os => os.status === "Em análise").length;
+    document.getElementById("countReparo").innerText = ordensServico.filter(os => os.status === "Em reparo").length;
+    document.getElementById("countProntos").innerText = ordensServico.filter(os => os.status === "Pronto").length;
+}
+
+function renderizarListaOS(lista) {
+    const container = document.getElementById("osList");
+    container.innerHTML = "";
 
     if (lista.length === 0) {
-        grid.innerHTML = `<p style="color: var(--text-secondary);">Nenhuma Ordem de Serviço encontrada.</p>`;
+        container.innerHTML = `<p style="text-align:center; color:#64748b; margin-top:1rem;">Nenhuma ordem encontrada.</p>`;
         return;
     }
 
     lista.forEach(os => {
-        let badgeClass = "badge-orcamento";
-        if (os.status === "Em Análise") badgeClass = "badge-analise";
-        if (os.status === "Em Manutenção") badgeClass = "badge-manutencao";
-        if (os.status === "Pronto para Retirada") badgeClass = "badge-pronto";
-
-        const card = document.createElement("div");
-        card.className = "os-card";
-        card.innerHTML = `
-            <div>
-                <div class="os-header">
-                    <span class="os-number">O.S. #${os.id}</span>
-                    <span class="badge ${badgeClass}">${os.status}</span>
-                </div>
-                <div class="os-body">
-                    <p><strong>Cliente:</strong> ${os.cliente}</p>
-                    <p><strong>Aparelho:</strong> ${os.aparelho}</p>
-                    <p><strong>IMEI:</strong> ${os.imei}</p>
-                    <p><strong>Defeito:</strong> ${os.defeito}</p>
-                    <p><strong>Valor:</strong> R$ ${os.valor || 'A definir'}</p>
-                </div>
+        const item = document.createElement("div");
+        item.className = "os-item";
+        item.innerHTML = `
+            <div class="os-top">
+                <span class="os-title">OS #${os.id}</span>
+                <span class="status-badge">${os.status}</span>
             </div>
-            <button class="btn-primary" style="padding:0.5rem;" onclick="notificarWhatsApp('${os.cliente}', '${os.telefone}', '${os.aparelho}', '${os.status}', '${os.valor}')">💬 Avisar no WhatsApp</button>
+            <div class="os-subtitle">${os.cliente} • ${os.telefone}</div>
+            <div class="os-device">${os.aparelho} • IMEI ${os.imei}</div>
+            <div class="os-detail"><strong>Defeito:</strong> ${os.defeito}</div>
+            ${os.obs ? `<div class="os-detail"><strong>Observações:</strong> ${os.obs}</div>` : ''}
+            <div class="os-value">Valor: R$ ${os.valor || '0,00'}</div>
+            <button class="btn-wsp" onclick="enviarWhatsApp('${os.cliente}', '${os.telefone}', '${os.aparelho}', '${os.status}', '${os.valor}')">💬 Avisar no WhatsApp</button>
         `;
-        grid.appendChild(card);
+        container.appendChild(item);
     });
 }
 
 function buscarOS() {
     const query = document.getElementById("searchInput").value.toLowerCase();
     const filtrados = ordensServico.filter(os => 
-        os.id.toString().includes(query) ||
+        os.id.toLowerCase().includes(query) ||
         os.cliente.toLowerCase().includes(query) ||
-        os.imei.toLowerCase().includes(query) ||
-        os.aparelho.toLowerCase().includes(query)
+        os.aparelho.toLowerCase().includes(query) ||
+        os.imei.toLowerCase().includes(query)
     );
-    renderizarOS(filtrados);
+    renderizarListaOS(filtrados);
 }
 
-function abrirModalNovaOS() {
+function abrirModalOS() {
     document.getElementById("osModal").style.display = "flex";
 }
 
-function fecharModalNovaOS() {
+function fecharModalOS() {
     document.getElementById("osModal").style.display = "none";
     document.getElementById("osForm").reset();
     document.getElementById("previewContainer").innerHTML = "";
@@ -102,30 +125,32 @@ function previewImages(event) {
     }
 }
 
-function salvarEEnviarOS(event) {
+function salvarOS(event) {
     event.preventDefault();
 
-    const novoId = ordensServico.length > 0 ? ordensServico[ordensServico.length - 1].id + 1 : 1001;
+    const idRandom = Math.floor(100000 + Math.random() * 900000).toString();
     const cliente = document.getElementById("clientName").value;
-    const telefone = document.getElementById("clientPhone").value.replace(/\D/g, '');
+    const telefone = document.getElementById("clientPhone").value;
     const aparelho = document.getElementById("deviceModel").value;
     const imei = document.getElementById("deviceIMEI").value;
     const defeito = document.getElementById("deviceDefect").value;
+    const obs = document.getElementById("deviceObs").value;
     const status = document.getElementById("serviceStatus").value;
     const valor = document.getElementById("servicePrice").value;
 
-    const novaOS = { id: novoId, cliente, telefone, aparelho, imei, defeito, status, valor };
+    const novaOS = { id: idRandom, cliente, telefone, aparelho, imei, defeito, obs, status, valor };
     ordensServico.unshift(novaOS);
 
-    renderizarOS(ordensServico);
-    fecharModalNovaOS();
-    notificarWhatsApp(cliente, telefone, aparelho, status, valor);
+    atualizarPainel();
+    fecharModalOS();
+    enviarWhatsApp(cliente, telefone, aparelho, status, valor);
 }
 
-function notificarWhatsApp(cliente, telefone, aparelho, status, valor) {
-    let msg = `Olá *${cliente}*! 👋\nAqui é da *Oficina do Celular*.\n\nAtualização do seu aparelho (*${aparelho}*):\n📌 *Status:* ${status}\n`;
+function enviarWhatsApp(cliente, telefone, aparelho, status, valor) {
+    let num = telefone.replace(/\D/g, '');
+    let msg = `Olá *${cliente}*! 👋\nAqui é da *Oficina do Celular*.\n\nStatus da sua OS para o aparelho *${aparelho}*:\n📌 *Status:* ${status}\n`;
     if (valor) msg += `💰 *Valor:* R$ ${valor}\n`;
-    msg += `\nCaso tenha dúvidas, estamos à disposição!`;
+    msg += `\nQualquer dúvida estamos à disposição!`;
 
-    window.open(`https://api.whatsapp.com/send?phone=55${telefone}&text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(`https://api.whatsapp.com/send?phone=55${num}&text=${encodeURIComponent(msg)}`, '_blank');
 }
