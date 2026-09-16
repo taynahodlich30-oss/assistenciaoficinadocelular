@@ -1,9 +1,7 @@
 const SENHA_ACESSO = "123456";
 
 // ----------------------------------------------------
-// BANCO DE DADOS NA NUVEM (OPCIONAL)
-// Se quiser salvar tudo na nuvem para usar em vários celulares,
-// basta colocar a URL e a KEY do seu Supabase aqui:
+// COLE SUAS CHAVES DO FIREBASE AQUI:
 const firebaseConfig = {
   apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
   authDomain: "oficina-do-celular-eaaed.firebaseapp.com",
@@ -12,29 +10,36 @@ const firebaseConfig = {
   messagingSenderId: "32431619085",
   appId: "1:32431619085:web:18b3a2defb79795f832944",
   measurementId: "G-J6PHLDPD1H"
+};
+
+let db = null;
+
+// Inicializa Firebase
+try {
+    if (firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI") {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        console.log("🔥 Firebase conectado com sucesso!");
+    }
+} catch (e) {
+    console.error("Erro ao conectar no Firebase:", e);
+}
 // ----------------------------------------------------
 
 let ordensServico = [];
 
-// Elementos de Desenho de Assinatura
-let canvas, ctx;
-let drawing = false;
-
-// Inicializador da página
-window.addEventListener('DOMContentLoaded', () => {
-    carregarOSDoBanco();
-    configurarCanvasAssinatura();
-});
-
-// Carrega LocalStorage ou Supabase
+// Carrega as O.S. (do Firebase ou do LocalStorage)
 async function carregarOSDoBanco() {
-    if (supabaseClient) {
+    if (db) {
         try {
-            const { data, error } = await supabaseClient.from('ordens_servico').select('*').order('id', { ascending: false });
-            if (error) throw error;
-            ordensServico = data || [];
-        } catch (e) {
-            console.error("Erro Supabase:", e);
+            const snapshot = await db.collection('ordens_servico').get();
+            ordensServico = [];
+            snapshot.forEach(doc => {
+                ordensServico.push({ idDoc: doc.id, ...doc.data() });
+            });
+            console.log("Dados carregados do Firebase:", ordensServico);
+        } catch (error) {
+            console.error("Erro ao buscar no Firebase, usando local:", error);
             carregarLocal();
         }
     } else {
@@ -45,26 +50,24 @@ async function carregarOSDoBanco() {
 
 function carregarLocal() {
     const backup = localStorage.getItem('oficina_os_db');
-    ordensServico = backup ? JSON.parse(backup) : [
-        { 
-            id: "647636", cliente: "Jsjsje", telefone: "94949", aparelho: "Sbbsb", imei: "Wnnen", defeito: "Zbnsb", 
-            obs: "Snsnn", status: "Em reparo", valor: 799.00, peca: "Tela Original", custoPeca: 150.00, assinatura: ""
-        }
-    ];
+    ordensServico = backup ? JSON.parse(backup) : [];
 }
 
+// Salva a nova O.S.
 async function salvarNoBanco(novaOS) {
     ordensServico.unshift(novaOS);
     localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
-    
-    if (supabaseClient) {
+
+    if (db) {
         try {
-            await supabaseClient.from('ordens_servico').insert([novaOS]);
-        } catch (e) { console.error(e); }
+            await db.collection('ordens_servico').add(novaOS);
+            console.log("Salvo no Firebase com sucesso!");
+        } catch (error) {
+            console.error("Erro ao salvar no Firebase:", error);
+        }
     }
     atualizarPainel();
 }
-
 // Lógica de Login
 function validarSenha() {
     const senha = document.getElementById("passwordInput").value;
