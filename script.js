@@ -1,66 +1,65 @@
 const SENHA_ACESSO = "123456";
 
-// ----------------------------------------------------
-// BANCO DE DADOS NA NUVEM (FIREBASE)
-// Cole as chaves reais da sua conta do Firebase abaixo:
+// CONFIGURAÇÃO DO FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
-  authDomain: "oficina-do-celular-eaaed.firebaseapp.com",
-  projectId: "oficina-do-celular-eaaed",
-  storageBucket: "oficina-do-celular-eaaed.firebasestorage.app",
-  messagingSenderId: "32431619085",
-  appId: "1:32431619085:web:18b3a2defb79795f832944",
-  measurementId: "G-J6PHLDPD1H"
+  apiKey: "COLE_SUA_API_KEY_AQUI",
+  authDomain: "seu-projeto.firebaseapp.com",
+  projectId: "seu-projeto",
+  storageBucket: "seu-projeto.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456:web:123456"
 };
 
 let db = null;
 
-// Inicializa o Firebase com proteção caso as chaves ainda não tenham sido inseridas
+// Inicializa o Firebase sem travar o restante do código caso haja erro
 try {
-    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== ""AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc") {
+    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI") {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
-        console.log("🔥 Firebase conectado com sucesso!");
-    } else {
-        console.warn("⚠️ Firebase não configurado. Salvando dados apenas localmente.");
+        console.log("🔥 Firebase conectado!");
     }
 } catch (e) {
-    console.error("Erro ao inicializar o Firebase:", e);
+    console.warn("Firebase não ativo, operando em modo local.");
 }
-// ----------------------------------------------------
 
 let ordensServico = [];
 let canvas, ctx;
 let drawing = false;
 
-// Inicialização da Página
-window.addEventListener('DOMContentLoaded', () => {
+// Inicializador da aplicação
+document.addEventListener('DOMContentLoaded', () => {
     carregarOSDoBanco();
-    configurarCanvasAssinatura();
 });
 
-// Autenticação e Login
+// LOGIN (Corrigido e protegido contra travamentos)
 function validarSenha() {
-    const input = document.getElementById("passwordInput").value;
-    const error = document.getElementById("loginError");
-    if (input === SENHA_ACESSO) {
-        document.getElementById("loginScreen").style.display = "none";
-        document.getElementById("appScreen").style.display = "block";
-        if(error) error.innerText = "";
-    } else {
-        if(error) error.innerText = "Senha incorreta!";
+    try {
+        const input = document.getElementById("passwordInput");
+        const error = document.getElementById("loginError");
+        
+        if (!input) return;
+
+        if (input.value === SENHA_ACESSO) {
+            document.getElementById("loginScreen").style.display = "none";
+            document.getElementById("appScreen").style.display = "block";
+            if (error) error.innerText = "";
+        } else {
+            if (error) error.innerText = "Senha incorreta!";
+        }
+    } catch (err) {
+        console.error("Erro no login:", err);
     }
 }
 
 function logout() {
     document.getElementById("loginScreen").style.display = "flex";
     document.getElementById("appScreen").style.display = "none";
-    document.getElementById("passwordInput").value = "";
+    const pass = document.getElementById("passwordInput");
+    if (pass) pass.value = "";
 }
 
-// ----------------------------------------------------
-// ASSINATURA DIGITAL SUPORTE TOUCH (CELULAR E PC)
-// ----------------------------------------------------
+// ASSINATURA TOUCH NO CELULAR
 function configurarCanvasAssinatura() {
     canvas = document.getElementById("signatureCanvas");
     if (!canvas) return;
@@ -69,16 +68,15 @@ function configurarCanvasAssinatura() {
     ctx.strokeStyle = "#0b1329";
     ctx.lineWidth = 2.5;
 
-    // Redimensiona para o tamanho visível
-    canvas.width = canvas.offsetWidth || 400;
+    canvas.width = canvas.offsetWidth || 350;
     canvas.height = canvas.offsetHeight || 150;
 
-    // Eventos Mouse (Desktop)
+    // Eventos Mouse
     canvas.addEventListener("mousedown", (e) => { drawing = true; desenharMouse(e); });
     canvas.addEventListener("mouseup", () => { drawing = false; ctx.beginPath(); });
     canvas.addEventListener("mousemove", desenharMouse);
 
-    // Eventos Touch (Celulares / Tablets)
+    // Eventos Touch (Celulares)
     canvas.addEventListener("touchstart", (e) => { 
         drawing = true; 
         desenharTouch(e); 
@@ -97,7 +95,7 @@ function configurarCanvasAssinatura() {
 }
 
 function desenharMouse(e) {
-    if (!drawing) return;
+    if (!drawing || !canvas) return;
     const rect = canvas.getBoundingClientRect();
     ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
     ctx.stroke();
@@ -106,7 +104,7 @@ function desenharMouse(e) {
 }
 
 function desenharTouch(e) {
-    if (!drawing) return;
+    if (!drawing || !canvas) return;
     const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
     ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
@@ -122,9 +120,7 @@ function limparAssinatura() {
     }
 }
 
-// ----------------------------------------------------
-// GERENCIAMENTO DE DADOS (FIREBASE + LOCALSTORAGE)
-// ----------------------------------------------------
+// GERENCIAMENTO DE DADOS
 async function carregarOSDoBanco() {
     if (db) {
         try {
@@ -133,9 +129,7 @@ async function carregarOSDoBanco() {
             snapshot.forEach(doc => {
                 ordensServico.push({ idDoc: doc.id, ...doc.data() });
             });
-            console.log("OSs carregadas do Firebase!");
         } catch (error) {
-            console.error("Erro ao buscar no Firebase, carregando local:", error);
             carregarLocal();
         }
     } else {
@@ -150,16 +144,12 @@ function carregarLocal() {
 }
 
 async function salvarNoBanco(novaOS) {
-    // Salva no LocalStorage em segundo plano
     ordensServico.unshift(novaOS);
     localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
 
-    // Salva no Firebase
     if (db) {
         try {
-            const docRef = await db.collection('ordens_servico').add(novaOS);
-            novaOS.idDoc = docRef.id;
-            console.log("Salvo no Firebase com sucesso!");
+            await db.collection('ordens_servico').add(novaOS);
         } catch (error) {
             console.error("Erro ao salvar no Firebase:", error);
         }
@@ -167,9 +157,7 @@ async function salvarNoBanco(novaOS) {
     atualizarPainel();
 }
 
-// ----------------------------------------------------
-// INTERFACE E RENDERIZAÇÃO
-// ----------------------------------------------------
+// INTERFACE
 function abrirModalOS() {
     document.getElementById("osModal").style.display = "flex";
     setTimeout(() => {
@@ -181,8 +169,6 @@ function abrirModalOS() {
 function fecharModalOS() {
     document.getElementById("osModal").style.display = "none";
     document.getElementById("osForm").reset();
-    const previewContainer = document.getElementById("previewContainer");
-    if(previewContainer) previewContainer.innerHTML = "";
     limparAssinatura();
 }
 
@@ -201,36 +187,18 @@ async function salvarOS(event) {
     const status = document.getElementById("serviceStatus").value;
     const valor = parseFloat(document.getElementById("servicePrice").value || 0);
 
-    // Extrai a assinatura do Canvas em formato Imagem
     let assinatura = "";
     if (canvas) {
-        const blank = document.createElement('canvas');
-        blank.width = canvas.width;
-        blank.height = canvas.height;
-        if (canvas.toDataURL() !== blank.toDataURL()) {
-            assinatura = canvas.toDataURL();
-        }
+        assinatura = canvas.toDataURL();
     }
 
     const novaOS = { 
-        id: idRandom, 
-        cliente, 
-        telefone, 
-        aparelho, 
-        imei, 
-        defeito, 
-        obs, 
-        peca, 
-        custoPeca, 
-        status, 
-        valor, 
-        assinatura,
+        id: idRandom, cliente, telefone, aparelho, imei, defeito, obs, peca, custoPeca, status, valor, assinatura,
         dataCriacao: new Date().toLocaleDateString('pt-BR')
     };
 
     await salvarNoBanco(novaOS);
     fecharModalOS();
-    enviarWhatsApp(cliente, telefone, aparelho, status, valor);
 }
 
 function atualizarPainel() {
@@ -266,7 +234,6 @@ function renderizarListaOS(lista) {
             <div class="os-subtitle">${os.cliente} • ${os.telefone}</div>
             <div class="os-device">${os.aparelho} ${os.imei ? '• IMEI: ' + os.imei : ''}</div>
             <div class="os-detail"><strong>Defeito:</strong> ${os.defeito}</div>
-            ${os.obs ? `<div class="os-detail"><strong>Obs:</strong> ${os.obs}</div>` : ''}
             
             <div class="financial-details">
                 <div>Custo: <span>R$ ${custo.toFixed(2)}</span></div>
@@ -281,10 +248,6 @@ function renderizarListaOS(lista) {
                 </div>
             ` : ''}
 
-            <div class="os-legal-alert">
-                ⚖️ <strong>Prazo Legal:</strong> Máximo de 90 dias para retirada a partir do aviso. Após esse período incidirá taxa diária de armazenamento.
-            </div>
-
             <div class="btn-group">
                 <button class="btn-wsp" onclick="enviarWhatsApp('${os.cliente}', '${os.telefone}', '${os.aparelho}', '${os.status}', '${valor}')">💬 WhatsApp</button>
                 <button class="btn-print" onclick="imprimirCupom('${os.id}')">🖨️ Imprimir OS</button>
@@ -294,19 +257,16 @@ function renderizarListaOS(lista) {
     });
 }
 
-// Busca em Tempo Real
 function buscarOS() {
     const query = document.getElementById("searchInput").value.toLowerCase();
     const filtrados = ordensServico.filter(os => 
         (os.id && os.id.toLowerCase().includes(query)) ||
         (os.cliente && os.cliente.toLowerCase().includes(query)) ||
-        (os.aparelho && os.aparelho.toLowerCase().includes(query)) ||
-        (os.imei && os.imei.toLowerCase().includes(query))
+        (os.aparelho && os.aparelho.toLowerCase().includes(query))
     );
     renderizarListaOS(filtrados);
 }
 
-// Impressão Térmica / Bobina
 function imprimirCupom(id) {
     const os = ordensServico.find(o => o.id === id);
     if (!os) return;
@@ -321,26 +281,17 @@ function imprimirCupom(id) {
         <p><strong>Cliente:</strong> ${os.cliente}</p>
         <p><strong>Tel:</strong> ${os.telefone}</p>
         <p><strong>Aparelho:</strong> ${os.aparelho}</p>
-        <p><strong>IMEI:</strong> ${os.imei || 'Não informado'}</p>
         <div class="line"></div>
         <p><strong>Defeito:</strong> ${os.defeito}</p>
-        <p><strong>Peça:</strong> ${os.peca || 'Não informada'}</p>
         <p><strong>Valor Total: R$ ${parseFloat(os.valor || 0).toFixed(2)}</strong></p>
         <div class="line"></div>
-        <p style="font-size:7pt; text-align:justify;">
-            ⚠️ ATENÇÃO: O cliente declara estar ciente de que tem o prazo máximo de 90 dias (3 meses), a contar do aviso de conclusão, para a retirada do aparelho.
-        </p>
-        <div class="line"></div>
-        ${os.assinatura ? `<p style="text-align:center;"><strong>Assinatura do Cliente:</strong></p><img src="${os.assinatura}">` : '<br><br><p style="text-align:center;">________________________<br>Assinatura do Cliente</p>'}
-        <br><p style="text-align:center; font-size:8pt;">Agradecemos a preferência!</p>
+        ${os.assinatura ? `<p style="text-align:center;"><strong>Assinatura do Cliente:</strong></p><img src="${os.assinatura}">` : ''}
     `;
     window.print();
 }
 
 function enviarWhatsApp(cliente, telefone, aparelho, status, valor) {
     let num = telefone.replace(/\D/g, '');
-    const avisoLegal = `⚠️ *IMPORTANTE:* Conforme os termos, o prazo limite para retirada do aparelho é de 90 dias.`;
-    let msg = `Olá *${cliente}*! 👋\nAqui é da *Oficina do Celular*.\n\nStatus da sua OS para o aparelho *${aparelho}*:\n📌 *Status:* ${status}\n💰 *Valor:* R$ ${parseFloat(valor).toFixed(2)}\n\n${avisoLegal}\n\nQualquer dúvida, estamos à disposição!`;
-
+    let msg = `Olá *${cliente}*! 👋\nAqui é da *Oficina do Celular*.\n\nStatus da sua OS para o aparelho *${aparelho}*:\n📌 *Status:* ${status}\n💰 *Valor:* R$ ${parseFloat(valor).toFixed(2)}`;
     window.open(`https://api.whatsapp.com/send?phone=55${num}&text=${encodeURIComponent(msg)}`, '_blank');
 }
