@@ -167,18 +167,24 @@
                     <div class="checklist-item"><span>Wi-Fi / Sinal</span><select id="checkSignal"><option value="OK">OK</option><option value="Defeito">Defeito</option><option value="N/T">N/T</option></select></div>
                 </div>
 
-                <label>Defeito Relatado</label>
-                <input type="text" id="deviceDefect" placeholder="Ex: Tela quebrada" required>
+                <label>Defeito Relatado pelo Cliente</label>
+                <input type="text" id="deviceDefect" placeholder="Ex: Não liga / Tela quebrada" required>
+
+                <label>Componentes Trocados / Substituídos</label>
+                <input type="text" id="replacedParts" placeholder="Ex: Tela Incell, Conector C, Bateria Original Gold" required>
+
+                <label>Descrição detalhada do serviço realizado</label>
+                <textarea id="serviceDescription" rows="2" placeholder="Ex: Troca de tela efetuada e ressolda no conector de carga..."></textarea>
 
                 <label>Observações / Riscos do Aparelho</label>
-                <textarea id="deviceObs" rows="2" placeholder="Ex: Trincado na traseira..."></textarea>
+                <textarea id="deviceObs" rows="2" placeholder="Ex: Trincado na traseira, tampa solta..."></textarea>
 
                 <label>Selecione Peça do Estoque (Opcional)</label>
                 <select id="stockPartSelect" onchange="selecionarPecaEstoque()">
                     <option value="">Selecione uma peça...</option>
                 </select>
 
-                <label>Nome da Peça Utilizada</label>
+                <label>Nome da Peça Principal (para dar baixa no Estoque)</label>
                 <input type="text" id="usedPart" placeholder="Ex: Tela Incell iPhone 12">
 
                 <label>Custo da Peça (R$)</label>
