@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oficina do Celular - Painel Interno</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="login-container">
+        <div class="card">
+            <h2>Oficina do Celular</h2>
+            <p>Área Restrita - Digite a senha para acessar</p>
+            <input type="password" id="passwordInput" placeholder="Sua senha de acesso">
+            <button onclick="validarSenha()">Entrar no Painel</button>
+            <p id="loginError" class="error-text"></p>
+        </div>
+    </div>
+
+    <!-- Conteúdo do App -->
+    <div id="appScreen" class="app-container" style="display: none;">
+        <header>
+            <h1>Oficina do Celular</h1>
+            <button class="btn-logout" onclick="logout()">Sair</button>
+        </header>
+
+        <main class="content">
+            <!-- SEÇÃO 1: GERAR ORÇAMENTO E FOTOS DE ENTRADA -->
+            <section class="card">
+                <h2>1. Registrar Entrada e Enviar Orçamento</h2>
+                <form id="budgetForm" onsubmit="gerarEEnviarOrcamento(event)">
+                    
+                    <label>Nome do Cliente</label>
+                    <input type="text" id="clientName" placeholder="Ex: João Silva" required>
+
+                    <label>WhatsApp do Cliente (com DDD)</label>
+                    <input type="tel" id="clientPhone" placeholder="Ex: 11999998888" required>
+
+                    <label>Modelo do Aparelho</label>
+                    <input type="text" id="deviceModel" placeholder="Ex: iPhone 11 128GB" required>
+
+                    <label>Fotos do Aparelho na Entrada (Check-in)</label>
+                    <input type="file" id="devicePhotos" accept="image/*" multiple onchange="previewImages(event)">
+                    <div id="previewContainer" class="preview-container"></div>
+
+                    <label>Defeito / Serviço a Realizar</label>
+                    <textarea id="serviceDetails" placeholder="Ex: Troca de tela e bateria" required></textarea>
+
+                    <label>Valor Total (R$)</label>
+                    <input type="text" id="totalValue" placeholder="Ex: 350,00" required>
+
+                    <label>Prazo de Entrega</label>
+                    <input type="text" id="deliveryDeadline" placeholder="Ex: Hoje até 18h" required>
+
+                    <button type="submit" class="btn-whatsapp">Enviar Orçamento via WhatsApp</button>
+                </form>
+            </section>
+
+            <!-- SEÇÃO 2: NOTIFICAR APARELHO PRONTO -->
+            <section class="card">
+                <h2>2. Avisar que o Aparelho está Pronto</h2>
+                <form id="readyForm" onsubmit="notificarAparelhoPronto(event)">
+                    
+                    <label>Nome do Cliente</label>
+                    <input type="text" id="readyClientName" placeholder="Ex: João Silva" required>
+
+                    <label>WhatsApp do Cliente (com DDD)</label>
+                    <input type="tel" id="readyClientPhone" placeholder="Ex: 11999998888" required>
+
+                    <label>Modelo do Aparelho</label>
+                    <input type="text" id="readyDeviceModel" placeholder="Ex: iPhone 11 128GB" required>
+
+                    <label>Valor a Pagar na Retirada (R$)</label>
+                    <input type="text" id="readyTotalValue" placeholder="Ex: 350,00" required>
+
+                    <button type="submit" class="btn-ready">Notificar Cliente (Pronto p/ Retirada)</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
