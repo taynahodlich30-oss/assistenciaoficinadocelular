@@ -2,13 +2,15 @@ const SENHA_ACESSO = "123456";
 
 // Cole suas chaves reais do Firebase aqui quando quiser ativar a nuvem:
 const firebaseConfig = {
-  apiKey: "COLE_SUA_API_KEY_AQUI",
-  authDomain: "seu-projeto.firebaseapp.com",
-  projectId: "seu-projeto",
-  storageBucket: "seu-projeto.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456:web:123456"
+  apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
+  authDomain: "oficina-do-celular-eaaed.firebaseapp.com",
+  projectId: "oficina-do-celular-eaaed",
+  storageBucket: "oficina-do-celular-eaaed.firebasestorage.app",
+  messagingSenderId: "32431619085",
+  appId: "1:32431619085:web:18b3a2defb79795f832944",
+  measurementId: "G-J6PHLDPD1H"
 };
+
 
 let db = null;
 
