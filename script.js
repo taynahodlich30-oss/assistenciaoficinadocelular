@@ -1,5 +1,5 @@
 // CONFIGURAÇÃO DO SISTEMA
-const SENHA_ACESSO = "123456"; // Altere sua senha aqui se desejar
+const SENHA_ACESSO = "576249"; // Altere sua senha aqui se desejar
 
 // CONFIGURAÇÃO DO FIREBASE (Projeto: oficina-do-celular-eaaed)
 const firebaseConfig = {
