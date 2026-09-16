@@ -1,86 +1,131 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oficina do Celular - Painel Interno</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+const SENHA_ACESSO = "123456";
 
-    <!-- Tela de Login -->
-    <div id="loginScreen" class="login-container">
-        <div class="card">
-            <h2>Oficina do Celular</h2>
-            <p>Área Restrita - Digite a senha para acessar</p>
-            <input type="password" id="passwordInput" placeholder="Sua senha de acesso">
-            <button onclick="validarSenha()">Entrar no Painel</button>
-            <p id="loginError" class="error-text"></p>
-        </div>
-    </div>
+// Banco de dados em memória de Exemplo
+let ordensServico = [
+    { id: 1001, cliente: "Carlos Eduardo", telefone: "11999991111", aparelho: "iPhone 12", imei: "354128091234567", defeito: "Troca de tela", status: "Em Manutenção", valor: "450,00" },
+    { id: 1002, cliente: "Mariana Costa", telefone: "11988882222", aparelho: "Samsung S21", imei: "358741098765432", defeito: "Não carrega (conector)", status: "Em Análise", valor: "180,00" }
+];
 
-    <!-- Conteúdo do App -->
-    <div id="appScreen" class="app-container" style="display: none;">
-        <header>
-            <h1>Oficina do Celular</h1>
-            <button class="btn-logout" onclick="logout()">Sair</button>
-        </header>
+function validarSenha() {
+    const senha = document.getElementById("passwordInput").value;
+    const error = document.getElementById("loginError");
 
-        <main class="content">
-            <!-- SEÇÃO 1: GERAR ORÇAMENTO E FOTOS DE ENTRADA -->
-            <section class="card">
-                <h2>1. Registrar Entrada e Enviar Orçamento</h2>
-                <form id="budgetForm" onsubmit="gerarEEnviarOrcamento(event)">
-                    
-                    <label>Nome do Cliente</label>
-                    <input type="text" id="clientName" placeholder="Ex: João Silva" required>
+    if (senha === SENHA_ACESSO) {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appScreen").style.display = "block";
+        error.innerText = "";
+        renderizarOS(ordensServico);
+    } else {
+        error.innerText = "Senha incorreta!";
+    }
+}
 
-                    <label>WhatsApp do Cliente (com DDD)</label>
-                    <input type="tel" id="clientPhone" placeholder="Ex: 11999998888" required>
+function logout() {
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("appScreen").style.display = "none";
+    document.getElementById("passwordInput").value = "";
+}
 
-                    <label>Modelo do Aparelho</label>
-                    <input type="text" id="deviceModel" placeholder="Ex: iPhone 11 128GB" required>
+function renderizarOS(lista) {
+    const grid = document.getElementById("osList");
+    grid.innerHTML = "";
 
-                    <label>Fotos do Aparelho na Entrada (Check-in)</label>
-                    <input type="file" id="devicePhotos" accept="image/*" multiple onchange="previewImages(event)">
-                    <div id="previewContainer" class="preview-container"></div>
+    if (lista.length === 0) {
+        grid.innerHTML = `<p style="color: var(--text-secondary);">Nenhuma Ordem de Serviço encontrada.</p>`;
+        return;
+    }
 
-                    <label>Defeito / Serviço a Realizar</label>
-                    <textarea id="serviceDetails" placeholder="Ex: Troca de tela e bateria" required></textarea>
+    lista.forEach(os => {
+        let badgeClass = "badge-orcamento";
+        if (os.status === "Em Análise") badgeClass = "badge-analise";
+        if (os.status === "Em Manutenção") badgeClass = "badge-manutencao";
+        if (os.status === "Pronto para Retirada") badgeClass = "badge-pronto";
 
-                    <label>Valor Total (R$)</label>
-                    <input type="text" id="totalValue" placeholder="Ex: 350,00" required>
+        const card = document.createElement("div");
+        card.className = "os-card";
+        card.innerHTML = `
+            <div>
+                <div class="os-header">
+                    <span class="os-number">O.S. #${os.id}</span>
+                    <span class="badge ${badgeClass}">${os.status}</span>
+                </div>
+                <div class="os-body">
+                    <p><strong>Cliente:</strong> ${os.cliente}</p>
+                    <p><strong>Aparelho:</strong> ${os.aparelho}</p>
+                    <p><strong>IMEI:</strong> ${os.imei}</p>
+                    <p><strong>Defeito:</strong> ${os.defeito}</p>
+                    <p><strong>Valor:</strong> R$ ${os.valor || 'A definir'}</p>
+                </div>
+            </div>
+            <button class="btn-primary" style="padding:0.5rem;" onclick="notificarWhatsApp('${os.cliente}', '${os.telefone}', '${os.aparelho}', '${os.status}', '${os.valor}')">💬 Avisar no WhatsApp</button>
+        `;
+        grid.appendChild(card);
+    });
+}
 
-                    <label>Prazo de Entrega</label>
-                    <input type="text" id="deliveryDeadline" placeholder="Ex: Hoje até 18h" required>
+function buscarOS() {
+    const query = document.getElementById("searchInput").value.toLowerCase();
+    const filtrados = ordensServico.filter(os => 
+        os.id.toString().includes(query) ||
+        os.cliente.toLowerCase().includes(query) ||
+        os.imei.toLowerCase().includes(query) ||
+        os.aparelho.toLowerCase().includes(query)
+    );
+    renderizarOS(filtrados);
+}
 
-                    <button type="submit" class="btn-whatsapp">Enviar Orçamento via WhatsApp</button>
-                </form>
-            </section>
+function abrirModalNovaOS() {
+    document.getElementById("osModal").style.display = "flex";
+}
 
-            <!-- SEÇÃO 2: NOTIFICAR APARELHO PRONTO -->
-            <section class="card">
-                <h2>2. Avisar que o Aparelho está Pronto</h2>
-                <form id="readyForm" onsubmit="notificarAparelhoPronto(event)">
-                    
-                    <label>Nome do Cliente</label>
-                    <input type="text" id="readyClientName" placeholder="Ex: João Silva" required>
+function fecharModalNovaOS() {
+    document.getElementById("osModal").style.display = "none";
+    document.getElementById("osForm").reset();
+    document.getElementById("previewContainer").innerHTML = "";
+}
 
-                    <label>WhatsApp do Cliente (com DDD)</label>
-                    <input type="tel" id="readyClientPhone" placeholder="Ex: 11999998888" required>
+function previewImages(event) {
+    const container = document.getElementById("previewContainer");
+    container.innerHTML = "";
+    const files = event.target.files;
 
-                    <label>Modelo do Aparelho</label>
-                    <input type="text" id="readyDeviceModel" placeholder="Ex: iPhone 11 128GB" required>
+    if (files) {
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.createElement("img");
+                img.src = e.target.result;
+                container.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
 
-                    <label>Valor a Pagar na Retirada (R$)</label>
-                    <input type="text" id="readyTotalValue" placeholder="Ex: 350,00" required>
+function salvarEEnviarOS(event) {
+    event.preventDefault();
 
-                    <button type="submit" class="btn-ready">Notificar Cliente (Pronto p/ Retirada)</button>
-                </form>
-            </section>
-        </main>
-    </div>
+    const novoId = ordensServico.length > 0 ? ordensServico[ordensServico.length - 1].id + 1 : 1001;
+    const cliente = document.getElementById("clientName").value;
+    const telefone = document.getElementById("clientPhone").value.replace(/\D/g, '');
+    const aparelho = document.getElementById("deviceModel").value;
+    const imei = document.getElementById("deviceIMEI").value;
+    const defeito = document.getElementById("deviceDefect").value;
+    const status = document.getElementById("serviceStatus").value;
+    const valor = document.getElementById("servicePrice").value;
 
-    <script src="script.js"></script>
-</body>
-</html>
+    const novaOS = { id: novoId, cliente, telefone, aparelho, imei, defeito, status, valor };
+    ordensServico.unshift(novaOS);
+
+    renderizarOS(ordensServico);
+    fecharModalNovaOS();
+    notificarWhatsApp(cliente, telefone, aparelho, status, valor);
+}
+
+function notificarWhatsApp(cliente, telefone, aparelho, status, valor) {
+    let msg = `Olá *${cliente}*! 👋\nAqui é da *Oficina do Celular*.\n\nAtualização do seu aparelho (*${aparelho}*):\n📌 *Status:* ${status}\n`;
+    if (valor) msg += `💰 *Valor:* R$ ${valor}\n`;
+    msg += `\nCaso tenha dúvidas, estamos à disposição!`;
+
+    window.open(`https://api.whatsapp.com/send?phone=55${telefone}&text=${encodeURIComponent(msg)}`, '_blank');
+}
