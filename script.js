@@ -95,7 +95,6 @@ async function salvarNoBanco(novaOS) {
     atualizarPainel();
 }
 
-// ESTOQUE - SALVAR E DAR BAIXA AUTOMÁTICA
 async function salvarPecaEstoque(e) {
     e.preventDefault();
     const novaPeca = {
@@ -168,7 +167,6 @@ async function darBaixaEstoque(nomePeca) {
     }
 }
 
-// VERIFICAR HISTÓRICO DO CLIENTE
 function verificarHistoricoCliente() {
     const phone = document.getElementById('clientPhone').value.replace(/\D/g, '');
     if (!phone) return;
@@ -176,13 +174,12 @@ function verificarHistoricoCliente() {
     const alertBox = document.getElementById('clientHistoryAlert');
     
     if (anteriores.length > 0) {
-        alertBox.innerText = `🔍 Cliente antigo encontrado! ${anteriores.length} OS anterior(es) registrada(s).`;
+        alertBox.innerText = `🔍 Cliente antigo! ${anteriores.length} OS anterior(es) encontrada(s).`;
     } else {
         alertBox.innerText = `✨ Novo cliente no sistema.`;
     }
 }
 
-// MUDAR STATUS OS
 async function alterarStatusOS(osId, novoStatus) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (os) {
@@ -299,9 +296,12 @@ function atualizarPainel() {
             <p>💰 <strong>Valor:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
             ${fotosHTML}
             <div class="os-card-actions">
-                <button class="btn-sm btn-wa-orcamento" onclick="waOrcamento('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟡 WhatsApp</button>
+                <button class="btn-sm btn-wa-orcamento" onclick="waOrcamento('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟡 Orçamento</button>
                 <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟢 Pronto</button>
-                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')">🖨️ Termo</button>
+                <button class="btn-sm btn-wa-comprovante" onclick="waEnviarComprovante('${os.idOS}')">📲 Via Zap</button>
+            </div>
+            <div class="os-card-subactions">
+                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')">🖨️ OS Papel</button>
                 <button class="btn-sm" style="background:#a855f7;" onclick="imprimirEtiqueta('${os.idOS}')">🏷️ Etiqueta</button>
             </div>
         `;
@@ -316,6 +316,27 @@ function atualizarPainel() {
     document.getElementById('totalBruto').innerText = `R$ ${bruto.toFixed(2)}`;
     document.getElementById('totalCusto').innerText = `R$ ${custo.toFixed(2)}`;
     document.getElementById('totalLucro').innerText = `R$ ${(bruto - custo).toFixed(2)}`;
+}
+
+// ENVIAR VIA DIGITAL SEM IMPRIMIR
+function waEnviarComprovante(osId) {
+    const os = ordensServico.find(item => item.idOS === osId);
+    if (!os) return;
+
+    const num = os.whatsapp.replace(/\D/g, '');
+    const chk = os.checklist || {};
+    
+    let texto = `*📱 OFICINA DO CELULAR - OS ENTRADA*\n`;
+    texto += `*OS:* ${os.idOS}\n`;
+    texto += `*Cliente:* ${os.cliente}\n`;
+    texto += `*Aparelho:* ${os.modelo}\n`;
+    texto += `*Defeito:* ${os.defeito}\n`;
+    texto += `*Valor Estimado:* R$ ${os.valor.toFixed(2)}\n\n`;
+    texto += `*Checklist de Entrada:*\n`;
+    texto += `- Touch: ${chk.touch || 'N/T'}\n- Carga: ${chk.charge || 'N/T'}\n- Câmeras: ${chk.cameras || 'N/T'}\n- Bio/FaceID: ${chk.bio || 'N/T'}\n\n`;
+    texto += `_Termo: Garantia de 90 dias. Aparelhos não retirados em 90 dias serão considerados abandonados._`;
+
+    window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
 }
 
 function waOrcamento(telefone, osId, modelo, valor) {
@@ -334,6 +355,37 @@ function abrirModalOS() { document.getElementById('osModal').style.display = 'fl
 function fecharModalOS() { document.getElementById('osModal').style.display = 'none'; }
 function abrirModalEstoque() { document.getElementById('stockModal').style.display = 'flex'; renderizarEstoque(); }
 function fecharModalEstoque() { document.getElementById('stockModal').style.display = 'none'; }
+
+function abrirModalRelatorio() {
+    document.getElementById('reportModal').style.display = 'flex';
+    
+    let lucroTotal = 0;
+    let contagemModelos = {};
+    
+    ordensServico.forEach(os => {
+        lucroTotal += ((os.valor || 0) - (os.custoPeca || 0));
+        if (os.modelo) {
+            contagemModelos[os.modelo] = (contagemModelos[os.modelo] || 0) + 1;
+        }
+    });
+
+    let modeloMaisAtendido = "-";
+    let maxQt = 0;
+    for (let mod in contagemModelos) {
+        if (contagemModelos[mod] > maxQt) {
+            maxQt = contagemModelos[mod];
+            modeloMaisAtendido = `${mod} (${maxQt}x)`;
+        }
+    }
+
+    let avg = ordensServico.length > 0 ? (lucroTotal / ordensServico.length) : 0;
+
+    document.getElementById('reportMonthLucro').innerText = `R$ ${lucroTotal.toFixed(2)}`;
+    document.getElementById('reportTopModel').innerText = modeloMaisAtendido;
+    document.getElementById('reportTicketAvg').innerText = `R$ ${avg.toFixed(2)}`;
+}
+
+function fecharModalRelatorio() { document.getElementById('reportModal').style.display = 'none'; }
 
 function inicializarCanvas() {
     canvas = document.getElementById('signatureCanvas');
@@ -383,7 +435,6 @@ function buscarOS() {
     });
 }
 
-// IMPRESSÃO DE CUPOM COMPLETO COM CHECKLIST
 function imprimirCupom(osId) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (!os) return;
@@ -430,7 +481,6 @@ function imprimirCupom(osId) {
     setTimeout(() => { window.print(); }, 200);
 }
 
-// IMPRESSÃO DE ETIQUETA COM QR CODE
 function imprimirEtiqueta(osId) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (!os) return;
