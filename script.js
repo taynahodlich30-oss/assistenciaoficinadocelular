@@ -3,12 +3,13 @@ const SENHA_ACESSO = "123456"; // Altere sua senha aqui se desejar
 
 // CONFIGURAÇÃO DO FIREBASE (Projeto: oficina-do-celular-eaaed)
 const firebaseConfig = {
-    apiKey: "AIzaSyDa-placeholder", // Suas credenciais do Firebase
+    apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
     authDomain: "oficina-do-celular-eaaed.firebaseapp.com",
     projectId: "oficina-do-celular-eaaed",
-    storageBucket: "oficina-do-celular-eaaed.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:abcdef"
+    storageBucket: "oficina-do-celular-eaaed.firebasestorage.app",
+    messagingSenderId: "32431619085",
+    appId: "1:32431619085:web:18b3a2defb79795f832944",
+    measurementId: "G-J6PHLDPD1H"
 };
 
 // Inicialização do Firebase e Firestore
