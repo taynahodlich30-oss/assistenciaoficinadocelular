@@ -11,7 +11,7 @@ body {
     min-height: 100vh;
 }
 
-/* Header Estilo da Imagem */
+/* Header */
 .app-header {
     background-color: #0b1329;
     color: #ffffff;
@@ -51,14 +51,13 @@ body {
     font-size: 0.85rem;
 }
 
-/* Container */
+/* Content & Metrics */
 .content {
     max-width: 600px;
     margin: 0 auto;
     padding: 1.2rem 1rem;
 }
 
-/* Dashboard Metrics (Métricas 2x2 da foto) */
 .metrics-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -88,7 +87,7 @@ body {
     font-weight: 500;
 }
 
-/* Botão Principal Escuro */
+/* Actions & Buttons */
 .btn-main-action {
     width: 100%;
     background-color: #0b1329;
@@ -102,7 +101,6 @@ body {
     margin-bottom: 1rem;
 }
 
-/* Busca */
 .search-container input {
     width: 100%;
     background: #ffffff;
@@ -112,7 +110,6 @@ body {
     font-size: 0.95rem;
     color: #0f172a;
     margin-bottom: 1.2rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .search-container input:focus {
@@ -120,7 +117,7 @@ body {
     border-color: #0b1329;
 }
 
-/* Cards de OS (Estilo IDÊNTICO ao print enviado) */
+/* Cards de O.S. */
 .os-list {
     display: flex;
     flex-direction: column;
@@ -132,6 +129,8 @@ body {
     border-radius: 20px;
     padding: 1.3rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    position: relative;
+    border-left: 5px solid #0b1329;
 }
 
 .os-top {
@@ -148,7 +147,7 @@ body {
 }
 
 .status-badge {
-    background: #e2e8f0;
+    background: #cbd5e1;
     color: #334155;
     padding: 0.3rem 0.8rem;
     border-radius: 20px;
@@ -179,26 +178,201 @@ body {
     font-weight: 700;
 }
 
-.os-value {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #0f172a;
+.financial-details {
     margin-top: 0.6rem;
+    padding: 0.6rem;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #334155;
+    display: flex;
+    justify-content: space-between;
+}
+
+.financial-details span {
+    font-weight: 700;
+}
+
+.text-profit {
+    color: #16a34a;
+}
+
+.os-legal-alert {
+    background-color: #fffbeb;
+    border: 1px dashed #f59e0b;
+    border-radius: 8px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.75rem;
+    color: #b45309;
+    margin-top: 0.8rem;
+    line-height: 1.3;
+}
+
+/* Assinatura no Card */
+.os-signature-preview {
+    margin-top: 0.8rem;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 0.5rem;
+}
+
+.os-signature-preview img {
+    max-height: 40px;
+    border-radius: 4px;
+}
+
+/* Grid de Botões do Card */
+.btn-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-top: 1rem;
 }
 
 .btn-wsp {
-    margin-top: 0.8rem;
-    width: 100%;
     background-color: #22c55e;
     color: white;
     border: none;
-    padding: 0.6rem;
+    padding: 0.7rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
 }
 
-/* Login e Modais */
+.btn-print {
+    background-color: #0b1329;
+    color: white;
+    border: none;
+    padding: 0.7rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    z-index: 100;
+}
+
+.modal-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 0.8rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 0.8rem;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.dark-bg-form-group {
+    background-color: #f8fafc;
+    padding: 0.6rem;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+}
+
+label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.3rem;
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 0.7rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+/* Canvas da Assinatura */
+.canvas-container {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 120px;
+    cursor: crosshair;
+}
+
+.btn-clear {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.legal-disclaimer {
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+    border-radius: 10px;
+    padding: 0.8rem;
+    font-size: 0.75rem;
+    color: #ef4444;
+    margin-top: 1rem;
+    line-height: 1.4;
+}
+
+.btn-dark-full {
+    width: 100%;
+    background-color: #0b1329;
+    color: white;
+    border: none;
+    padding: 0.8rem;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+/* Estilos de Login */
 .login-container {
     display: flex;
     justify-content: center;
@@ -254,83 +428,6 @@ body {
     margin-top: 0.8rem;
 }
 
-/* Modal Form */
-.modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 1rem;
-    z-index: 100;
-}
-
-.modal-card {
-    background: white;
-    border-radius: 20px;
-    padding: 1.5rem;
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.btn-close {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-}
-
-.form-group {
-    margin-bottom: 0.8rem;
-}
-
-.form-row {
-    display: flex;
-    gap: 0.8rem;
-}
-
-.form-row .form-group {
-    flex: 1;
-}
-
-label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #475569;
-    margin-bottom: 0.3rem;
-}
-
-input, textarea, select {
-    width: 100%;
-    padding: 0.7rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 0.9rem;
-}
-
-.btn-dark-full {
-    width: 100%;
-    background-color: #0b1329;
-    color: white;
-    border: none;
-    padding: 0.8rem;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 1rem;
-}
-
 .preview-container {
     display: flex;
     gap: 6px;
@@ -342,4 +439,43 @@ input, textarea, select {
     height: 50px;
     object-fit: cover;
     border-radius: 6px;
+}
+
+/* FORMATO DE IMPRESSÃO (Bobina Térmica/Cupom) */
+.print-only {
+    display: none;
+}
+
+@media print {
+    body * {
+        display: none !important;
+    }
+    .print-only, .print-only * {
+        display: block !important;
+    }
+    .print-only {
+        width: 80mm; /* Padrão de Bobina */
+        padding: 5px;
+        color: #000;
+        font-family: monospace;
+        font-size: 10pt;
+        line-height: 1.2;
+    }
+    .print-only h2 {
+        text-align: center;
+        margin-bottom: 5px;
+        font-size: 14pt;
+    }
+    .print-only p {
+        margin-bottom: 4px;
+    }
+    .print-only .line {
+        border-bottom: 1px dashed #000;
+        margin: 8px 0;
+    }
+    .print-only img {
+        display: block !important;
+        max-width: 150px;
+        margin: 10px auto;
+    }
 }
