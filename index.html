@@ -176,12 +176,13 @@
 
     <script src="script.js"></script>
     <script>
-        // Registro de PWA (Instalação no celular)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('PWA carregado com sucesso.'))
-                .catch(err => console.log('Erro ao carregar PWA:', err));
-        }
-    </script>
+      <script>
+    // Registro seguro do PWA no GitHub Pages
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('PWA carregado com sucesso.'))
+            .catch(err => console.log('PWA ignorado ou com aviso:', err));
+    }
+</script>
 </body>
 </html>
