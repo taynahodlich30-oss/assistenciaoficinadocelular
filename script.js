@@ -1,55 +1,46 @@
 const SENHA_ACESSO = "123456";
 
-// CONFIGURAÇÃO DO FIREBASE
+// Cole suas chaves reais do Firebase aqui quando quiser ativar a nuvem:
 const firebaseConfig = {
-  apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
-  authDomain: "oficina-do-celular-eaaed.firebaseapp.com",
-  projectId: "oficina-do-celular-eaaed",
-  storageBucket: "oficina-do-celular-eaaed.firebasestorage.app",
-  messagingSenderId: "32431619085",
-  appId: "1:32431619085:web:18b3a2defb79795f832944",
-  measurementId: "G-J6PHLDPD1H"
+  apiKey: "COLE_SUA_API_KEY_AQUI",
+  authDomain: "seu-projeto.firebaseapp.com",
+  projectId: "seu-projeto",
+  storageBucket: "seu-projeto.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456:web:123456"
 };
 
 let db = null;
 
-// Inicializa o Firebase sem travar o restante do código caso haja erro
 try {
-    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !==("AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc") {
+    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "COLE_SUA_API_KEY_AQUI") {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         console.log("🔥 Firebase conectado!");
     }
 } catch (e) {
-    console.warn("Firebase não ativo, operando em modo local.");
+    console.warn("Operando em modo local.");
 }
 
 let ordensServico = [];
 let canvas, ctx;
 let drawing = false;
 
-// Inicializador da aplicação
 document.addEventListener('DOMContentLoaded', () => {
     carregarOSDoBanco();
 });
 
-// LOGIN (Corrigido e protegido contra travamentos)
 function validarSenha() {
-    try {
-        const input = document.getElementById("passwordInput");
-        const error = document.getElementById("loginError");
-        
-        if (!input) return;
+    const input = document.getElementById("passwordInput");
+    const error = document.getElementById("loginError");
+    if (!input) return;
 
-        if (input.value === SENHA_ACESSO) {
-            document.getElementById("loginScreen").style.display = "none";
-            document.getElementById("appScreen").style.display = "block";
-            if (error) error.innerText = "";
-        } else {
-            if (error) error.innerText = "Senha incorreta!";
-        }
-    } catch (err) {
-        console.error("Erro no login:", err);
+    if (input.value === SENHA_ACESSO) {
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appScreen").style.display = "block";
+        if (error) error.innerText = "";
+    } else {
+        if (error) error.innerText = "Senha incorreta!";
     }
 }
 
@@ -60,7 +51,6 @@ function logout() {
     if (pass) pass.value = "";
 }
 
-// ASSINATURA TOUCH NO CELULAR
 function configurarCanvasAssinatura() {
     canvas = document.getElementById("signatureCanvas");
     if (!canvas) return;
@@ -72,12 +62,10 @@ function configurarCanvasAssinatura() {
     canvas.width = canvas.offsetWidth || 350;
     canvas.height = canvas.offsetHeight || 150;
 
-    // Eventos Mouse
     canvas.addEventListener("mousedown", (e) => { drawing = true; desenharMouse(e); });
     canvas.addEventListener("mouseup", () => { drawing = false; ctx.beginPath(); });
     canvas.addEventListener("mousemove", desenharMouse);
 
-    // Eventos Touch (Celulares)
     canvas.addEventListener("touchstart", (e) => { 
         drawing = true; 
         desenharTouch(e); 
@@ -121,7 +109,6 @@ function limparAssinatura() {
     }
 }
 
-// GERENCIAMENTO DE DADOS
 async function carregarOSDoBanco() {
     if (db) {
         try {
@@ -152,13 +139,12 @@ async function salvarNoBanco(novaOS) {
         try {
             await db.collection('ordens_servico').add(novaOS);
         } catch (error) {
-            console.error("Erro ao salvar no Firebase:", error);
+            console.error("Erro no Firebase:", error);
         }
     }
     atualizarPainel();
 }
 
-// INTERFACE
 function abrirModalOS() {
     document.getElementById("osModal").style.display = "flex";
     setTimeout(() => {
