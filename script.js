@@ -1,4 +1,4 @@
-const SENHA_ACESSO = "123456"; 
+const SENHA_ACESSO = "576249"; 
 
 const firebaseConfig = {
     apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
@@ -322,7 +322,6 @@ function atualizarPainel() {
     document.getElementById('totalLucro').innerText = `R$ ${(bruto - custo).toFixed(2)}`;
 }
 
-// ENVIAR VIA DIGITAL SEM IMPRIMIR
 function waEnviarComprovante(osId) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (!os) return;
@@ -352,7 +351,13 @@ function waOrcamento(telefone, osId, modelo, valor) {
 
 function waPronto(telefone, osId, modelo, valor) {
     const num = telefone.replace(/\D/g, '');
-    const msg = encodeURIComponent(`Olá! O seu *${modelo}* (${osId}) já está pronto para retirada. Valor: *R$ ${parseFloat(valor).toFixed(2)}*. Aguardamos você!`);
+    const linkAvaliacao = "https://share.google/fCGo2AkH2HVhHMzSP";
+    
+    const msg = encodeURIComponent(
+        `Olá! Excelente notícia 🎉! O seu *${modelo}* (${osId}) já está pronto para retirada. Valor: *R$ ${parseFloat(valor).toFixed(2)}*. Aguardamos você!\n\n` +
+        `Se puder dedicar 1 minutinho para avaliar o nosso atendimento no Google, nos ajuda muito: ${linkAvaliacao}`
+    );
+    
     window.open(`https://wa.me/55${num}?text=${msg}`, '_blank');
 }
 
