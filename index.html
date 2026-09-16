@@ -4,21 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oficina do Celular - Ordens de Serviço</title>
-    <!-- link para PWA -->
+    <!-- Link para PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b1329">
     
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Supabase CDN (Carrega se o usuário configurar no script.js) -->
-<!-- Bibliotecas do Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
 
-<!-- Seu arquivo principal de script -->
-<script src="script.js"></script>
-</body>
     <!-- Tela de Login -->
     <div id="loginScreen" class="login-container">
         <div class="login-card">
@@ -169,20 +163,24 @@
         </div>
     </div>
 
-    <!-- Área oculta de Impressão de Cupom (Sempre escondido exceto ao imprimir) -->
-    <div id="printSection" class="print-only">
-        <!-- Preenchido via Javascript com formatação de bobina térmica -->
-    </div>
+    <!-- Área oculta de Impressão de Cupom -->
+    <div id="printSection" class="print-only"></div>
 
+    <!-- Carregamento do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+    <!-- Script Principal da Aplicação -->
     <script src="script.js"></script>
+
+    <!-- PWA Service Worker -->
     <script>
-      <script>
-    // Registro seguro do PWA no GitHub Pages
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log('PWA carregado com sucesso.'))
-            .catch(err => console.log('PWA ignorado ou com aviso:', err));
-    }
-</script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log('PWA carregado com sucesso.'))
+                .catch(err => console.log('PWA ignorado:', err));
+        }
+    </script>
+
 </body>
 </html>
