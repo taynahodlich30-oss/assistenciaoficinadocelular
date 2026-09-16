@@ -1,7 +1,5 @@
-// CONFIGURAÇÃO DO SISTEMA
 const SENHA_ACESSO = "123456"; 
 
-// CONFIGURAÇÃO DO FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
     authDomain: "oficina-do-celular-eaaed.firebaseapp.com",
@@ -17,10 +15,9 @@ try {
     if (typeof firebase !== 'undefined') {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
-        console.log("🔥 Firebase conectado com sucesso!");
     }
 } catch (e) {
-    console.error("❌ Erro ao inicializar Firebase:", e);
+    console.error("Erro Firebase:", e);
 }
 
 let ordensServico = [];
@@ -28,7 +25,6 @@ let fotosTemp = [];
 let canvas, ctx;
 let isDrawing = false;
 
-// LOGIN E SESSÃO
 function validarSenha() {
     const input = document.getElementById('passwordInput').value;
     if (input === SENHA_ACESSO) {
@@ -60,7 +56,6 @@ function exibirApp() {
     carregarOSDoBanco();
 }
 
-// INTEGRAÇÃO BANCO DE DADOS
 async function carregarOSDoBanco() {
     if (db) {
         try {
@@ -91,17 +86,31 @@ async function salvarNoBanco(novaOS) {
         try {
             const docRef = await db.collection('ordens_servico').add(novaOS);
             novaOS.idDoc = docRef.id;
-            alert("🎉 Sucesso! Ordem de Serviço salva no FIREBASE!");
         } catch (error) {
-            alert("❌ Erro ao salvar no Firebase!");
+            console.error(error);
         }
-    } else {
-        alert("⚠️ Salvo apenas localmente.");
     }
     atualizarPainel();
 }
 
-// PROCESSAMENTO DE FOTOS CHECK-IN
+// MUDAR STATUS EM TEMPO REAL
+async function alterarStatusOS(osId, novoStatus) {
+    const os = ordensServico.find(item => item.idOS === osId);
+    if (os) {
+        os.status = novoStatus;
+        localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
+
+        if (db && os.idDoc) {
+            try {
+                await db.collection('ordens_servico').doc(os.idDoc).update({ status: novoStatus });
+            } catch (e) {
+                console.error("Erro ao atualizar status:", e);
+            }
+        }
+        atualizarPainel();
+    }
+}
+
 function previewImages(event) {
     const files = event.target.files;
     const container = document.getElementById('previewContainer');
@@ -121,7 +130,6 @@ function previewImages(event) {
     });
 }
 
-// CRIAR E EXIBIR OS
 function salvarOS(event) {
     event.preventDefault();
 
@@ -181,16 +189,21 @@ function atualizarPainel() {
         card.innerHTML = `
             <div class="os-card-header">
                 <strong>${os.idOS} - ${os.cliente}</strong>
-                <span>${os.status}</span>
+                <select class="status-select" onchange="alterarStatusOS('${os.idOS}', this.value)">
+                    <option value="Em orçamento" ${os.status === 'Em orçamento' ? 'selected' : ''}>Em orçamento</option>
+                    <option value="Em análise" ${os.status === 'Em análise' ? 'selected' : ''}>Em análise</option>
+                    <option value="Em reparo" ${os.status === 'Em reparo' ? 'selected' : ''}>Em reparo</option>
+                    <option value="Pronto" ${os.status === 'Pronto' ? 'selected' : ''}>Pronto</option>
+                </select>
             </div>
             <p>📱 <strong>Aparelho:</strong> ${os.modelo} (IMEI: ${os.imei})</p>
             <p>🔧 <strong>Defeito:</strong> ${os.defeito}</p>
             <p>💰 <strong>Valor:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
             ${fotosHTML}
             <div class="os-card-actions">
-                <button class="btn-sm btn-wa-orcamento" onclick="waOrcamento('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟡 Zap Orçamento</button>
-                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟢 Zap Pronto</button>
-                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')">🖨️ Cupom</button>
+                <button class="btn-sm btn-wa-orcamento" onclick="waOrcamento('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟡 Orçamento</button>
+                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟢 Pronto</button>
+                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')">🖨️ Imprimir OS</button>
             </div>
         `;
         osList.appendChild(card);
@@ -206,7 +219,6 @@ function atualizarPainel() {
     document.getElementById('totalLucro').innerText = `R$ ${(bruto - custo).toFixed(2)}`;
 }
 
-// MENSAGENS WHATSAPP
 function waOrcamento(telefone, osId, modelo, valor) {
     const num = telefone.replace(/\D/g, '');
     const msg = encodeURIComponent(`Olá! Referente à sua *${osId}* do aparelho *${modelo}*: O orçamento total ficou em *R$ ${parseFloat(valor).toFixed(2)}*. Podemos aprovar o serviço?`);
@@ -219,7 +231,6 @@ function waPronto(telefone, osId, modelo, valor) {
     window.open(`https://wa.me/55${num}?text=${msg}`, '_blank');
 }
 
-// CANVASES E MODAL
 function abrirModalOS() { document.getElementById('osModal').style.display = 'flex'; }
 function fecharModalOS() { document.getElementById('osModal').style.display = 'none'; }
 
@@ -271,32 +282,47 @@ function buscarOS() {
     });
 }
 
+// FUNÇÃO DE IMPRESSÃO LIMPA (SOMENTE COMPROVANTE E TERMO)
 function imprimirCupom(osId) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (!os) return;
 
     const printSection = document.getElementById('printSection');
     printSection.innerHTML = `
-        <div style="font-family: monospace; width: 280px; font-size: 12px;">
-            <h3 style="text-align: center; margin: 0;">📱 OFICINA DO CELULAR</h3>
-            <p style="text-align: center; margin: 2px 0;">Comprovante de Entrada</p>
-            <hr>
-            <p><strong>OS:</strong> ${os.idOS}</p>
-            <p><strong>Data:</strong> ${os.data}</p>
-            <p><strong>Cliente:</strong> ${os.cliente}</p>
-            <p><strong>Aparelho:</strong> ${os.modelo}</p>
-            <p><strong>Defeito:</strong> ${os.defeito}</p>
-            <p><strong>Valor:</strong> R$ ${os.valor.toFixed(2)}</p>
-            <hr>
-            <p style="font-size: 10px; text-align: justify;">⚠️ TERMO: O cliente declara estar ciente do prazo máximo de 90 dias para retirada do aparelho.</p>
-            <br>
-            <div style="text-align: center;">
-                <img src="${os.assinatura}" style="width: 200px; height: 60px; border-bottom: 1px solid #000;"><br>
-                <small>Assinatura do Cliente</small>
+        <div style="font-family: Arial, sans-serif; width: 100%; max-width: 300px; margin: 0 auto; color: #000;">
+            <h2 style="text-align: center; margin: 0; font-size: 16px;">📱 OFICINA DO CELULAR</h2>
+            <p style="text-align: center; margin: 2px 0; font-size: 12px;">ORDEM DE SERVIÇO DE ENTRADA</p>
+            <p style="text-align: center; font-size: 11px; margin-bottom: 5px;">Data: ${os.data}</p>
+            <hr style="border-top: 1px dashed #000; margin: 5px 0;">
+            
+            <p style="font-size: 12px; margin: 3px 0;"><strong>Nº OS:</strong> ${os.idOS}</p>
+            <p style="font-size: 12px; margin: 3px 0;"><strong>Cliente:</strong> ${os.cliente}</p>
+            <p style="font-size: 12px; margin: 3px 0;"><strong>WhatsApp:</strong> ${os.whatsapp}</p>
+            <p style="font-size: 12px; margin: 3px 0;"><strong>Aparelho:</strong> ${os.modelo}</p>
+            <p style="font-size: 12px; margin: 3px 0;"><strong>IMEI:</strong> ${os.imei}</p>
+            <p style="font-size: 12px; margin: 3px 0;"><strong>Defeito Relatado:</strong> ${os.defeito}</p>
+            <p style="font-size: 12px; margin: 3px 0;"><strong>Obs/Riscos:</strong> ${os.obs}</p>
+            <p style="font-size: 13px; margin: 5px 0;"><strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)}</p>
+            
+            <hr style="border-top: 1px dashed #000; margin: 8px 0;">
+            
+            <div style="font-size: 9px; text-align: justify; line-height: 1.2;">
+                <strong>TERMO DE GARANTIA E RETIRADA:</strong><br>
+                1. A garantia dos serviços prestados e peças trocadas é de <strong>90 dias</strong> a contar desta data.<br>
+                2. A garantia não cobre danos por quedas, oxidação (contato com líquidos) ou mau uso.<br>
+                3. O cliente declara estar ciente de que tem o prazo máximo de <strong>90 dias</strong> para a retirada do aparelho pronto. Após esse período, o aparelho será considerado abandonado nos termos da lei.
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <img src="${os.assinatura}" style="width: 180px; height: 50px; border-bottom: 1px solid #000;"><br>
+                <small style="font-size: 10px;">Assinatura do Cliente</small>
             </div>
         </div>
     `;
-    window.print();
+
+    setTimeout(() => {
+        window.print();
+    }, 200);
 }
 
 window.onload = function() { checarSessao(); };
