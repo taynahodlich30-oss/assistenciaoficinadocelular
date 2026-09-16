@@ -4,14 +4,14 @@ const SENHA_ACESSO = "123456";
 // BANCO DE DADOS NA NUVEM (OPCIONAL)
 // Se quiser salvar tudo na nuvem para usar em vários celulares,
 // basta colocar a URL e a KEY do seu Supabase aqui:
-const SUPABASE_URL = ""; 
-const SUPABASE_KEY = ""; 
-let supabaseClient = null;
-
-if (SUPABASE_URL && SUPABASE_KEY) {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log("Supabase conectado.");
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
+  authDomain: "oficina-do-celular-eaaed.firebaseapp.com",
+  projectId: "oficina-do-celular-eaaed",
+  storageBucket: "oficina-do-celular-eaaed.firebasestorage.app",
+  messagingSenderId: "32431619085",
+  appId: "1:32431619085:web:18b3a2defb79795f832944",
+  measurementId: "G-J6PHLDPD1H"
 // ----------------------------------------------------
 
 let ordensServico = [];
