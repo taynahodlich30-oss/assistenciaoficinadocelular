@@ -226,6 +226,8 @@ function salvarOS(event) {
         modelo: document.getElementById('deviceModel').value,
         imei: document.getElementById('deviceIMEI').value,
         defeito: document.getElementById('deviceDefect').value,
+        pecasTrocadas: document.getElementById('replacedParts').value || "Nenhuma informada",
+        descricaoServico: document.getElementById('serviceDescription').value || "Sem descrição adicional",
         obs: document.getElementById('deviceObs').value || "Sem observações",
         checklist: {
             touch: document.getElementById('checkTouch').value,
@@ -292,8 +294,10 @@ function atualizarPainel() {
                 </select>
             </div>
             <p>📱 <strong>Aparelho:</strong> ${os.modelo} (IMEI: ${os.imei})</p>
-            <p>🔧 <strong>Defeito:</strong> ${os.defeito}</p>
-            <p>💰 <strong>Valor:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
+            <p>🔧 <strong>Defeito Relatado:</strong> ${os.defeito}</p>
+            <p style="color: #4ade80;">⚙️ <strong>Componentes Trocados:</strong> ${os.pecasTrocadas || 'Nenhum registrado'}</p>
+            <p style="color: #cbd5e1; font-size: 12px;">📝 <strong>Descrição:</strong> ${os.descricaoServico || 'Sem detalhes'}</p>
+            <p>💰 <strong>Valor:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
             ${fotosHTML}
             <div class="os-card-actions">
                 <button class="btn-sm btn-wa-orcamento" onclick="waOrcamento('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟡 Orçamento</button>
@@ -330,11 +334,12 @@ function waEnviarComprovante(osId) {
     texto += `*OS:* ${os.idOS}\n`;
     texto += `*Cliente:* ${os.cliente}\n`;
     texto += `*Aparelho:* ${os.modelo}\n`;
-    texto += `*Defeito:* ${os.defeito}\n`;
+    texto += `*Defeito Relatado:* ${os.defeito}\n`;
+    texto += `*Itens Trocados:* ${os.pecasTrocadas || 'Em análise'}\n`;
     texto += `*Valor Estimado:* R$ ${os.valor.toFixed(2)}\n\n`;
     texto += `*Checklist de Entrada:*\n`;
     texto += `- Touch: ${chk.touch || 'N/T'}\n- Carga: ${chk.charge || 'N/T'}\n- Câmeras: ${chk.cameras || 'N/T'}\n- Bio/FaceID: ${chk.bio || 'N/T'}\n\n`;
-    texto += `_Termo: Garantia de 90 dias. Aparelhos não retirados em 90 dias serão considerados abandonados._`;
+    texto += `_Termo: Garantia de 90 dias para itens trocados. Aparelhos não retirados em 90 dias serão considerados abandonados._`;
 
     window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
 }
@@ -462,13 +467,14 @@ function imprimirCupom(osId) {
             <hr style="border-top: 1px dashed #000; margin: 5px 0;">
 
             <p style="font-size: 12px; margin: 2px 0;"><strong>Defeito:</strong> ${os.defeito}</p>
+            <p style="font-size: 12px; margin: 2px 0;"><strong>Peças Trocadas:</strong> ${os.pecasTrocadas || 'N/A'}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Obs/Riscos:</strong> ${os.obs}</p>
             <p style="font-size: 13px; margin: 5px 0;"><strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)}</p>
             
             <hr style="border-top: 1px dashed #000; margin: 8px 0;">
             
             <div style="font-size: 9px; text-align: justify; line-height: 1.2;">
-                <strong>TERMO DE GARANTIA:</strong> Garantia de 90 dias para os serviços prestados. Não cobre mau uso, quedas ou contato com líquidos. Prazo máximo para retirada: 90 dias.
+                <strong>TERMO DE GARANTIA:</strong> Garantia de 90 dias para os serviços prestados e peças trocadas. Não cobre mau uso, quedas ou contato com líquidos. Prazo máximo para retirada: 90 dias.
             </div>
             
             <div style="text-align: center; margin-top: 15px;">
