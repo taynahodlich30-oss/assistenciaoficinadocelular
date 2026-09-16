@@ -1,92 +1,131 @@
-// Senha de Acesso ao Painel da Oficina do Celular (Altere aqui se quiser)
 const SENHA_ACESSO = "123456";
 
-function validarSenha() {
-    const senhaDigitada = document.getElementById("passwordInput").value;
-    const errorElement = document.getElementById("loginError");
+// Banco de dados em memória de Exemplo
+let ordensServico = [
+    { id: 1001, cliente: "Carlos Eduardo", telefone: "11999991111", aparelho: "iPhone 12", imei: "354128091234567", defeito: "Troca de tela", status: "Em Manutenção", valor: "450,00" },
+    { id: 1002, cliente: "Mariana Costa", telefone: "11988882222", aparelho: "Samsung S21", imei: "358741098765432", defeito: "Não carrega (conector)", status: "Em Análise", valor: "180,00" }
+];
 
-    if (senhaDigitada === SENHA_ACESSO) {
+function validarSenha() {
+    const senha = document.getElementById("passwordInput").value;
+    const error = document.getElementById("loginError");
+
+    if (senha === SENHA_ACESSO) {
         document.getElementById("loginScreen").style.display = "none";
         document.getElementById("appScreen").style.display = "block";
-        errorElement.innerText = "";
+        error.innerText = "";
+        renderizarOS(ordensServico);
     } else {
-        errorElement.innerText = "Senha incorreta! Tente novamente.";
+        error.innerText = "Senha incorreta!";
     }
 }
 
 function logout() {
-    document.getElementById("passwordInput").value = "";
     document.getElementById("loginScreen").style.display = "flex";
     document.getElementById("appScreen").style.display = "none";
+    document.getElementById("passwordInput").value = "";
 }
 
-// Mostra o preview das fotos no painel
+function renderizarOS(lista) {
+    const grid = document.getElementById("osList");
+    grid.innerHTML = "";
+
+    if (lista.length === 0) {
+        grid.innerHTML = `<p style="color: var(--text-secondary);">Nenhuma Ordem de Serviço encontrada.</p>`;
+        return;
+    }
+
+    lista.forEach(os => {
+        let badgeClass = "badge-orcamento";
+        if (os.status === "Em Análise") badgeClass = "badge-analise";
+        if (os.status === "Em Manutenção") badgeClass = "badge-manutencao";
+        if (os.status === "Pronto para Retirada") badgeClass = "badge-pronto";
+
+        const card = document.createElement("div");
+        card.className = "os-card";
+        card.innerHTML = `
+            <div>
+                <div class="os-header">
+                    <span class="os-number">O.S. #${os.id}</span>
+                    <span class="badge ${badgeClass}">${os.status}</span>
+                </div>
+                <div class="os-body">
+                    <p><strong>Cliente:</strong> ${os.cliente}</p>
+                    <p><strong>Aparelho:</strong> ${os.aparelho}</p>
+                    <p><strong>IMEI:</strong> ${os.imei}</p>
+                    <p><strong>Defeito:</strong> ${os.defeito}</p>
+                    <p><strong>Valor:</strong> R$ ${os.valor || 'A definir'}</p>
+                </div>
+            </div>
+            <button class="btn-primary" style="padding:0.5rem;" onclick="notificarWhatsApp('${os.cliente}', '${os.telefone}', '${os.aparelho}', '${os.status}', '${os.valor}')">💬 Avisar no WhatsApp</button>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function buscarOS() {
+    const query = document.getElementById("searchInput").value.toLowerCase();
+    const filtrados = ordensServico.filter(os => 
+        os.id.toString().includes(query) ||
+        os.cliente.toLowerCase().includes(query) ||
+        os.imei.toLowerCase().includes(query) ||
+        os.aparelho.toLowerCase().includes(query)
+    );
+    renderizarOS(filtrados);
+}
+
+function abrirModalNovaOS() {
+    document.getElementById("osModal").style.display = "flex";
+}
+
+function fecharModalNovaOS() {
+    document.getElementById("osModal").style.display = "none";
+    document.getElementById("osForm").reset();
+    document.getElementById("previewContainer").innerHTML = "";
+}
+
 function previewImages(event) {
-    const previewContainer = document.getElementById("previewContainer");
-    previewContainer.innerHTML = "";
+    const container = document.getElementById("previewContainer");
+    container.innerHTML = "";
     const files = event.target.files;
 
     if (files) {
         Array.from(files).forEach(file => {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = e => {
                 const img = document.createElement("img");
                 img.src = e.target.result;
-                previewContainer.appendChild(img);
-            }
+                container.appendChild(img);
+            };
             reader.readAsDataURL(file);
         });
     }
 }
 
-// Disparo de Orçamento no WhatsApp
-function gerarEEnviarOrcamento(event) {
+function salvarEEnviarOS(event) {
     event.preventDefault();
 
-    const nome = document.getElementById("clientName").value;
-    let telefone = document.getElementById("clientPhone").value.replace(/\D/g, '');
-    const modelo = document.getElementById("deviceModel").value;
-    const servico = document.getElementById("serviceDetails").value;
-    const valor = document.getElementById("totalValue").value;
-    const prazo = document.getElementById("deliveryDeadline").value;
-    const fotos = document.getElementById("devicePhotos").files;
+    const novoId = ordensServico.length > 0 ? ordensServico[ordensServico.length - 1].id + 1 : 1001;
+    const cliente = document.getElementById("clientName").value;
+    const telefone = document.getElementById("clientPhone").value.replace(/\D/g, '');
+    const aparelho = document.getElementById("deviceModel").value;
+    const imei = document.getElementById("deviceIMEI").value;
+    const defeito = document.getElementById("deviceDefect").value;
+    const status = document.getElementById("serviceStatus").value;
+    const valor = document.getElementById("servicePrice").value;
 
-    let avisoFotos = fotos.length > 0 ? `\n\n📸 *Nota:* Registramos ${fotos.length} foto(s) de entrada em nosso sistema.` : '';
+    const novaOS = { id: novoId, cliente, telefone, aparelho, imei, defeito, status, valor };
+    ordensServico.unshift(novaOS);
 
-    const mensagem = 
-`Olá *${nome}*! 👋
-Aqui é da *Oficina do Celular*. Segue o orçamento para o seu aparelho:
-
-📲 *Aparelho:* ${modelo}
-🛠️ *Serviço:* ${servico}
-💰 *Valor:* R$ ${valor}
-⏱️ *Prazo de entrega:* ${prazo}${avisoFotos}
-
-Podemos aprovar o serviço para dar início?`;
-
-    const urlWhatsApp = `https://api.whatsapp.com/send?phone=55${telefone}&text=${encodeURIComponent(mensagem)}`;
-    window.open(urlWhatsApp, '_blank');
+    renderizarOS(ordensServico);
+    fecharModalNovaOS();
+    notificarWhatsApp(cliente, telefone, aparelho, status, valor);
 }
 
-// Disparo de Notificação de Aparelho Pronto
-function notificarAparelhoPronto(event) {
-    event.preventDefault();
+function notificarWhatsApp(cliente, telefone, aparelho, status, valor) {
+    let msg = `Olá *${cliente}*! 👋\nAqui é da *Oficina do Celular*.\n\nAtualização do seu aparelho (*${aparelho}*):\n📌 *Status:* ${status}\n`;
+    if (valor) msg += `💰 *Valor:* R$ ${valor}\n`;
+    msg += `\nCaso tenha dúvidas, estamos à disposição!`;
 
-    const nome = document.getElementById("readyClientName").value;
-    let telefone = document.getElementById("readyClientPhone").value.replace(/\D/g, '');
-    const modelo = document.getElementById("readyDeviceModel").value;
-    const valor = document.getElementById("readyTotalValue").value;
-
-    const mensagem = 
-`Boas notícias, *${nome}*! 🎉
-
-Seu aparelho *${modelo}* já está *PRONTO* para ser retirado na *Oficina do Celular*!
-
-✅ Testes de qualidade concluídos
-💰 *Valor a pagar:* R$ ${valor}
-
-Aguardamos você em nossa loja!`;
-
-    const urlWhatsApp = `https://api.whatsapp.com/send?phone=55${telefone}&text=${encodeURIComponent(mensagem)}`;
-    window.open(urlWhatsApp, '_blank');
+    window.open(`https://api.whatsapp.com/send?phone=55${telefone}&text=${encodeURIComponent(msg)}`, '_blank');
 }
