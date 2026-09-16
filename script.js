@@ -1,7 +1,7 @@
 // CONFIGURAÇÃO DO SISTEMA
-const SENHA_ACESSO = "576249"; // Altere sua senha aqui se desejar
+const SENHA_ACESSO = "123456"; 
 
-// CONFIGURAÇÃO DO FIREBASE (Projeto: oficina-do-celular-eaaed)
+// CONFIGURAÇÃO DO FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
     authDomain: "oficina-do-celular-eaaed.firebaseapp.com",
@@ -12,35 +12,30 @@ const firebaseConfig = {
     measurementId: "G-J6PHLDPD1H"
 };
 
-// Inicialização do Firebase e Firestore
 let db = null;
 try {
     if (typeof firebase !== 'undefined') {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         console.log("🔥 Firebase conectado com sucesso!");
-    } else {
-        console.warn("⚠️ Biblioteca do Firebase não encontrada no HTML.");
     }
 } catch (e) {
     console.error("❌ Erro ao inicializar Firebase:", e);
 }
 
-// VARIÁVEIS GLOBAIS DA APLICAÇÃO
 let ordensServico = [];
+let fotosTemp = [];
 let canvas, ctx;
 let isDrawing = false;
 
-// 1. SISTEMA DE LOGIN E SESSÃO
+// LOGIN E SESSÃO
 function validarSenha() {
     const input = document.getElementById('passwordInput').value;
-    const errorMsg = document.getElementById('loginError');
-
     if (input === SENHA_ACESSO) {
         sessionStorage.setItem('oficina_logado', 'true');
         exibirApp();
     } else {
-        errorMsg.innerText = "Senha incorreta! Tente novamente.";
+        document.getElementById('loginError').innerText = "Senha incorreta!";
     }
 }
 
@@ -65,7 +60,7 @@ function exibirApp() {
     carregarOSDoBanco();
 }
 
-// 2. INTEGRAÇÃO COM FIREBASE / LOCALSTORAGE
+// INTEGRAÇÃO BANCO DE DADOS
 async function carregarOSDoBanco() {
     if (db) {
         try {
@@ -74,9 +69,7 @@ async function carregarOSDoBanco() {
             snapshot.forEach(doc => {
                 ordensServico.push({ idDoc: doc.id, ...doc.data() });
             });
-            console.log("✅ OSs sincronizadas com o Firebase!");
         } catch (error) {
-            console.error("⚠️ Erro ao carregar do Firebase:", error);
             carregarLocal();
         }
     } else {
@@ -87,42 +80,55 @@ async function carregarOSDoBanco() {
 
 function carregarLocal() {
     const dadosSalvos = localStorage.getItem('oficina_os_db');
-    if (dadosSalvos) {
-        ordensServico = JSON.parse(dadosSalvos);
-    }
+    if (dadosSalvos) ordensServico = JSON.parse(dadosSalvos);
 }
 
 async function salvarNoBanco(novaOS) {
-    // 1. Salva localmente primeiro
     ordensServico.unshift(novaOS);
     localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
 
-    // 2. Tenta enviar para o Firestore
     if (db) {
         try {
             const docRef = await db.collection('ordens_servico').add(novaOS);
             novaOS.idDoc = docRef.id;
             alert("🎉 Sucesso! Ordem de Serviço salva no FIREBASE!");
         } catch (error) {
-            alert("❌ Erro ao salvar no Firebase! Veja o console (F12).");
-            console.error("Detalhes do Erro no Firebase:", error);
+            alert("❌ Erro ao salvar no Firebase!");
         }
     } else {
-        alert("⚠️ Atenção: Firebase não inicializado. Salvo apenas no navegador.");
+        alert("⚠️ Salvo apenas localmente.");
     }
     atualizarPainel();
 }
 
-// 3. GERENCIAMENTO DAS ORDENS DE SERVIÇO
+// PROCESSAMENTO DE FOTOS CHECK-IN
+function previewImages(event) {
+    const files = event.target.files;
+    const container = document.getElementById('previewContainer');
+    container.innerHTML = '';
+    fotosTemp = [];
+
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            fotosTemp.push(e.target.result);
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'preview-thumb';
+            container.appendChild(img);
+        }
+        reader.readAsDataURL(file);
+    });
+}
+
+// CRIAR E EXIBIR OS
 function salvarOS(event) {
     event.preventDefault();
 
     const osNumber = "OS-" + Math.floor(100000 + Math.random() * 900000);
-    const dataAtual = new Date().toLocaleDateString('pt-BR');
-
     const novaOS = {
         idOS: osNumber,
-        data: dataAtual,
+        data: new Date().toLocaleDateString('pt-BR'),
         cliente: document.getElementById('clientName').value,
         whatsapp: document.getElementById('clientPhone').value,
         modelo: document.getElementById('deviceModel').value,
@@ -133,12 +139,15 @@ function salvarOS(event) {
         custoPeca: parseFloat(document.getElementById('partCost').value) || 0,
         status: document.getElementById('serviceStatus').value,
         valor: parseFloat(document.getElementById('servicePrice').value) || 0,
+        fotos: fotosTemp,
         assinatura: canvas.toDataURL()
     };
 
     salvarNoBanco(novaOS);
     fecharModalOS();
     document.getElementById('osForm').reset();
+    document.getElementById('previewContainer').innerHTML = '';
+    fotosTemp = [];
     limparAssinatura();
 }
 
@@ -148,25 +157,40 @@ function atualizarPainel() {
 
     let total = ordensServico.length;
     let analise = 0, reparo = 0, prontos = 0;
+    let bruto = 0, custo = 0;
 
     ordensServico.forEach((os) => {
         if (os.status === 'Em análise') analise++;
         if (os.status === 'Em reparo') reparo++;
         if (os.status === 'Pronto') prontos++;
 
+        bruto += (os.valor || 0);
+        custo += (os.custoPeca || 0);
+
+        let fotosHTML = '';
+        if (os.fotos && os.fotos.length > 0) {
+            fotosHTML = '<div class="preview-container">';
+            os.fotos.forEach(f => {
+                fotosHTML += `<img src="${f}" class="preview-thumb">`;
+            });
+            fotosHTML += '</div>';
+        }
+
         const card = document.createElement('div');
         card.className = 'os-card';
         card.innerHTML = `
             <div class="os-card-header">
                 <strong>${os.idOS} - ${os.cliente}</strong>
-                <span class="badge ${getBadgeClass(os.status)}">${os.status}</span>
+                <span>${os.status}</span>
             </div>
             <p>📱 <strong>Aparelho:</strong> ${os.modelo} (IMEI: ${os.imei})</p>
             <p>🔧 <strong>Defeito:</strong> ${os.defeito}</p>
-            <p>💰 <strong>Valor:</strong> R$ ${os.valor.toFixed(2)}</p>
+            <p>💰 <strong>Valor:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
+            ${fotosHTML}
             <div class="os-card-actions">
-                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')">🖨️ Imprimir</button>
-                <button class="btn-sm btn-whatsapp" onclick="enviarWhatsApp('${os.whatsapp}', '${os.idOS}', '${os.status}')">💬 WhatsApp</button>
+                <button class="btn-sm btn-wa-orcamento" onclick="waOrcamento('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟡 Zap Orçamento</button>
+                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟢 Zap Pronto</button>
+                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')">🖨️ Cupom</button>
             </div>
         `;
         osList.appendChild(card);
@@ -176,32 +200,35 @@ function atualizarPainel() {
     document.getElementById('countAnalise').innerText = analise;
     document.getElementById('countReparo').innerText = reparo;
     document.getElementById('countProntos').innerText = prontos;
+
+    document.getElementById('totalBruto').innerText = `R$ ${bruto.toFixed(2)}`;
+    document.getElementById('totalCusto').innerText = `R$ ${custo.toFixed(2)}`;
+    document.getElementById('totalLucro').innerText = `R$ ${(bruto - custo).toFixed(2)}`;
 }
 
-function getBadgeClass(status) {
-    switch (status) {
-        case 'Em orçamento': return 'badge-orcamento';
-        case 'Em análise': return 'badge-analise';
-        case 'Em reparo': return 'badge-reparo';
-        case 'Pronto': return 'badge-pronto';
-        default: return '';
-    }
+// MENSAGENS WHATSAPP
+function waOrcamento(telefone, osId, modelo, valor) {
+    const num = telefone.replace(/\D/g, '');
+    const msg = encodeURIComponent(`Olá! Referente à sua *${osId}* do aparelho *${modelo}*: O orçamento total ficou em *R$ ${parseFloat(valor).toFixed(2)}*. Podemos aprovar o serviço?`);
+    window.open(`https://wa.me/55${num}?text=${msg}`, '_blank');
 }
 
-// 4. MODAL E ASSINATURA DIGITAL
-function abrirModalOS() {
-    document.getElementById('osModal').style.display = 'flex';
+function waPronto(telefone, osId, modelo, valor) {
+    const num = telefone.replace(/\D/g, '');
+    const msg = encodeURIComponent(`Olá! Excelente notícia 🎉! O seu *${modelo}* (${osId}) já está pronto para retirada. Valor: *R$ ${parseFloat(valor).toFixed(2)}*. Aguardamos você!`);
+    window.open(`https://wa.me/55${num}?text=${msg}`, '_blank');
 }
 
-function fecharModalOS() {
-    document.getElementById('osModal').style.display = 'none';
-}
+// CANVASES E MODAL
+function abrirModalOS() { document.getElementById('osModal').style.display = 'flex'; }
+function fecharModalOS() { document.getElementById('osModal').style.display = 'none'; }
 
 function inicializarCanvas() {
     canvas = document.getElementById('signatureCanvas');
     if (!canvas) return;
     ctx = canvas.getContext('2d');
-
+    canvas.width = canvas.offsetWidth || 300;
+    canvas.height = canvas.offsetHeight || 120;
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
 
@@ -209,8 +236,8 @@ function inicializarCanvas() {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
 
-    canvas.addEventListener('touchstart', startDrawingTouch);
-    canvas.addEventListener('touchmove', drawTouch);
+    canvas.addEventListener('touchstart', startDrawingTouch, { passive: false });
+    canvas.addEventListener('touchmove', drawTouch, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
 }
 
@@ -219,6 +246,7 @@ function draw(e) { if (!isDrawing) return; ctx.lineTo(e.offsetX, e.offsetY); ctx
 function stopDrawing() { isDrawing = false; }
 
 function startDrawingTouch(e) {
+    e.preventDefault();
     isDrawing = true;
     const rect = canvas.getBoundingClientRect();
     ctx.beginPath();
@@ -233,15 +261,14 @@ function drawTouch(e) {
     ctx.stroke();
 }
 
-function limparAssinatura() {
-    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
+function limparAssinatura() { if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-// 5. IMPRESSÃO E WHATSAPP
-function enviarWhatsApp(telefone, osId, status) {
-    const numLimpo = telefone.replace(/\D/g, '');
-    const mensagem = encodeURIComponent(`Olá! Sua Ordem de Serviço *${osId}* na Oficina do Celular teve o status atualizado para: *${status}*.`);
-    window.open(`https://wa.me/55${numLimpo}?text=${mensagem}`, '_blank');
+function buscarOS() {
+    const termo = document.getElementById('searchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.os-card');
+    cards.forEach(card => {
+        card.style.display = card.innerText.toLowerCase().includes(termo) ? 'block' : 'none';
+    });
 }
 
 function imprimirCupom(osId) {
@@ -272,18 +299,4 @@ function imprimirCupom(osId) {
     window.print();
 }
 
-// BUSCA RÁPIDA
-function buscarOS() {
-    const termo = document.getElementById('searchInput').value.toLowerCase();
-    const cards = document.querySelectorAll('.os-card');
-
-    cards.forEach(card => {
-        const texto = card.innerText.toLowerCase();
-        card.style.display = texto.includes(termo) ? 'block' : 'none';
-    });
-}
-
-// INICIALIZAÇÃO AUTOMÁTICA AO CARREGAR A PÁGINA
-window.onload = function() {
-    checarSessao();
-};
+window.onload = function() { checarSessao(); };
