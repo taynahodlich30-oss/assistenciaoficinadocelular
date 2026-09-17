@@ -84,7 +84,6 @@ function carregarLocal() {
 
 async function salvarNoBanco(novaOS) {
     if (novaOS.idDoc) {
-        // Atualização de OS existente
         const index = ordensServico.findIndex(o => o.idDoc === novaOS.idDoc || o.idOS === novaOS.idOS);
         if (index !== -1) ordensServico[index] = novaOS;
         localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
@@ -93,7 +92,6 @@ async function salvarNoBanco(novaOS) {
             try { await db.collection('ordens_servico').doc(novaOS.idDoc).set(novaOS); } catch (e) { console.error(e); }
         }
     } else {
-        // Nova OS
         ordensServico.unshift(novaOS);
         localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
 
@@ -107,7 +105,6 @@ async function salvarNoBanco(novaOS) {
     atualizarPainel();
 }
 
-// EXCLUIR OS
 async function excluirOS(osId) {
     if (!confirm("Tem certeza que deseja excluir esta Ordem de Serviço?")) return;
 
@@ -124,7 +121,6 @@ async function excluirOS(osId) {
     }
 }
 
-// EDITAR OS
 function editarOS(osId) {
     const os = ordensServico.find(o => o.idOS === osId);
     if (!os) return;
@@ -404,7 +400,6 @@ function atualizarPainel() {
     document.getElementById('totalLucro').innerText = `R$ ${(bruto - custo).toFixed(2)}`;
 }
 
-// MODAL DE ORÇAMENTO COM OPÇÕES DE TELAS
 function abrirModalOrcamentoOpcoes(osId, whatsapp, modelo) {
     document.getElementById('orcamentoOSId').value = osId;
     document.getElementById('orcamentoPhone').value = whatsapp;
@@ -437,24 +432,29 @@ function enviarWaOrcamentoOpcoes() {
     fecharModalOrcamento();
 }
 
+// ENVIAR COMPROVANTE DE ENTREGA + TERMO DE GARANTIA COM QR CODE VIA ZAP
 function waEnviarComprovante(osId) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (!os) return;
 
     const num = os.whatsapp.replace(/\D/g, '');
-    const chk = os.checklist || {};
-    
-    let texto = `*📱 OFICINA DO CELULAR - OS ENTRADA*\n`;
-    texto += `*OS:* ${os.idOS}\n`;
-    texto += `*Cliente:* ${os.cliente}\n`;
-    texto += `*Aparelho:* ${os.modelo}\n`;
-    texto += `*Defeito Relatado:* ${os.defeito}\n`;
-    texto += `*Itens Trocados:* ${os.pecasTrocadas || 'Em análise'}\n`;
-    texto += `*Pagamento:* ${os.statusPagamento || 'Aguardando'} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}\n`;
-    texto += `*Valor Estimado:* R$ ${os.valor.toFixed(2)}\n\n`;
-    texto += `*Checklist de Entrada:*\n`;
-    texto += `- Touch: ${chk.touch || 'N/T'}\n- Carga: ${chk.charge || 'N/T'}\n- Câmeras: ${chk.cameras || 'N/T'}\n- Bio/FaceID: ${chk.bio || 'N/T'}\n\n`;
-    texto += `_Termo: Garantia de 90 dias para itens trocados. Aparelhos não retirados em 90 dias serão considerados abandonados._`;
+    const qrCodeGarantia = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GARANTIA-${os.idOS}`;
+
+    let texto = `*📱 OFICINA DO CELULAR - COMPROVANTE DE ENTREGA & GARANTIA*\n\n`;
+    texto += `Prezado(a) *${os.cliente}*,\n`;
+    texto += `Seu aparelho foi entregue com sucesso! Seguem os detalhes do serviço realizado:\n\n`;
+    texto += `📄 *Ordem de Serviço:* ${os.idOS}\n`;
+    texto += `📱 *Aparelho:* ${os.modelo}\n`;
+    texto += `🔧 *Defeito Relatado:* ${os.defeito}\n`;
+    texto += `⚙️ *Componente(s) Trocado(s):* ${os.pecasTrocadas || 'Reparo Efetuado'}\n`;
+    texto += `💰 *Valor Cobrado:* R$ ${os.valor.toFixed(2)}\n`;
+    texto += `💳 *Status Pagamento:* ${os.statusPagamento || 'Pago'} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}\n\n`;
+    texto += `------------------------------------\n`;
+    texto += `🛡️ *TERMO DE GARANTIA DIGITAL (90 DIAS)*\n`;
+    texto += `Este comprovante assegura garantia de 90 dias a contar desta data para os componentes substituídos.\n`;
+    texto += `⚠️ *A garantia não cobre:* Quedas, quebras, marcas de impacto, selos rompidos ou contato com líquidos.\n\n`;
+    texto += `📲 *Consulte seu QR Code de Garantia:* ${qrCodeGarantia}\n\n`;
+    texto += `Agradecemos a preferência! Caso precise, estamos à disposição.`;
 
     window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
 }
