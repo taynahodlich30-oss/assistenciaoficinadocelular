@@ -1,4 +1,4 @@
-const SENHA_ACESSO = "576249"; 
+const SENHA_ACESSO = "123456"; 
 
 const firebaseConfig = {
     apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
@@ -83,16 +83,81 @@ function carregarLocal() {
 }
 
 async function salvarNoBanco(novaOS) {
-    ordensServico.unshift(novaOS);
-    localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
+    if (novaOS.idDoc) {
+        // Atualização de OS existente
+        const index = ordensServico.findIndex(o => o.idDoc === novaOS.idDoc || o.idOS === novaOS.idOS);
+        if (index !== -1) ordensServico[index] = novaOS;
+        localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
 
-    if (db) {
-        try {
-            const docRef = await db.collection('ordens_servico').add(novaOS);
-            novaOS.idDoc = docRef.id;
-        } catch (e) { console.error(e); }
+        if (db && novaOS.idDoc) {
+            try { await db.collection('ordens_servico').doc(novaOS.idDoc).set(novaOS); } catch (e) { console.error(e); }
+        }
+    } else {
+        // Nova OS
+        ordensServico.unshift(novaOS);
+        localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
+
+        if (db) {
+            try {
+                const docRef = await db.collection('ordens_servico').add(novaOS);
+                novaOS.idDoc = docRef.id;
+            } catch (e) { console.error(e); }
+        }
     }
     atualizarPainel();
+}
+
+// EXCLUIR OS
+async function excluirOS(osId) {
+    if (!confirm("Tem certeza que deseja excluir esta Ordem de Serviço?")) return;
+
+    const index = ordensServico.findIndex(o => o.idOS === osId);
+    if (index !== -1) {
+        const item = ordensServico[index];
+        ordensServico.splice(index, 1);
+        localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
+
+        if (db && item.idDoc) {
+            try { await db.collection('ordens_servico').doc(item.idDoc).delete(); } catch(e){ console.error(e); }
+        }
+        atualizarPainel();
+    }
+}
+
+// EDITAR OS
+function editarOS(osId) {
+    const os = ordensServico.find(o => o.idOS === osId);
+    if (!os) return;
+
+    document.getElementById('editDocId').value = os.idDoc || '';
+    document.getElementById('editOSId').value = os.idOS || '';
+    document.getElementById('clientPhone').value = os.whatsapp || '';
+    document.getElementById('clientName').value = os.cliente || '';
+    document.getElementById('deviceModel').value = os.modelo || '';
+    document.getElementById('deviceIMEI').value = os.imei || '';
+    document.getElementById('deviceDefect').value = os.defeito || '';
+    document.getElementById('replacedParts').value = os.pecasTrocadas || '';
+    document.getElementById('serviceDescription').value = os.descricaoServico || '';
+    document.getElementById('deviceObs').value = os.obs || '';
+    document.getElementById('usedPart').value = os.peca || '';
+    document.getElementById('partCost').value = os.custoPeca || '';
+    document.getElementById('serviceStatus').value = os.status || 'Em orçamento';
+    document.getElementById('paymentStatus').value = os.statusPagamento || 'Aguardando Pagamento';
+    document.getElementById('paymentDetails').value = os.detalhesPagamento || '';
+    document.getElementById('servicePrice').value = os.valor || '';
+
+    if (os.checklist) {
+        document.getElementById('checkTouch').value = os.checklist.touch || 'OK';
+        document.getElementById('checkCharge').value = os.checklist.charge || 'OK';
+        document.getElementById('checkCameras').value = os.checklist.cameras || 'OK';
+        document.getElementById('checkBio').value = os.checklist.bio || 'OK';
+        document.getElementById('checkAudio').value = os.checklist.audio || 'OK';
+        document.getElementById('checkSignal').value = os.checklist.signal || 'OK';
+    }
+
+    document.getElementById('modalTitle').innerText = `Editar ${os.idOS}`;
+    document.getElementById('btnSaveOS').innerText = "Atualizar Ordem de Serviço";
+    abrirModalOS();
 }
 
 async function salvarPecaEstoque(e) {
@@ -215,10 +280,14 @@ function previewImages(event) {
 function salvarOS(event) {
     event.preventDefault();
 
-    const osNumber = "OS-" + Math.floor(100000 + Math.random() * 900000);
+    const docIdExistente = document.getElementById('editDocId').value;
+    const osIdExistente = document.getElementById('editOSId').value;
+    const osNumber = osIdExistente || ("OS-" + Math.floor(100000 + Math.random() * 900000));
+    
     const pecaUtilizada = document.getElementById('usedPart').value || "Nenhuma";
 
     const novaOS = {
+        idDoc: docIdExistente || undefined,
         idOS: osNumber,
         data: new Date().toLocaleDateString('pt-BR'),
         cliente: document.getElementById('clientName').value,
@@ -240,18 +309,24 @@ function salvarOS(event) {
         peca: pecaUtilizada,
         custoPeca: parseFloat(document.getElementById('partCost').value) || 0,
         status: document.getElementById('serviceStatus').value,
+        statusPagamento: document.getElementById('paymentStatus').value,
+        detalhesPagamento: document.getElementById('paymentDetails').value || "",
         valor: parseFloat(document.getElementById('servicePrice').value) || 0,
         fotos: fotosTemp,
         assinatura: canvas.toDataURL()
     };
 
-    if (pecaUtilizada !== "Nenhuma") {
+    if (!docIdExistente && pecaUtilizada !== "Nenhuma") {
         darBaixaEstoque(pecaUtilizada);
     }
 
     salvarNoBanco(novaOS);
     fecharModalOS();
     document.getElementById('osForm').reset();
+    document.getElementById('editDocId').value = '';
+    document.getElementById('editOSId').value = '';
+    document.getElementById('modalTitle').innerText = "Criar Ordem de Serviço";
+    document.getElementById('btnSaveOS').innerText = "Salvar Ordem de Serviço";
     document.getElementById('previewContainer').innerHTML = '';
     document.getElementById('clientHistoryAlert').innerText = '';
     fotosTemp = [];
@@ -281,6 +356,10 @@ function atualizarPainel() {
             fotosHTML += '</div>';
         }
 
+        let corPagamento = "#eab308";
+        if (os.statusPagamento === "Pago") corPagamento = "#4ade80";
+        if (os.statusPagamento === "Parcial (Entrada/Resta)") corPagamento = "#38bdf8";
+
         const card = document.createElement('div');
         card.className = 'os-card';
         card.innerHTML = `
@@ -297,16 +376,19 @@ function atualizarPainel() {
             <p>🔧 <strong>Defeito Relatado:</strong> ${os.defeito}</p>
             <p style="color: #4ade80;">⚙️ <strong>Componentes Trocados:</strong> ${os.pecasTrocadas || 'Nenhum registrado'}</p>
             <p style="color: #cbd5e1; font-size: 12px;">📝 <strong>Descrição:</strong> ${os.descricaoServico || 'Sem detalhes'}</p>
-            <p>💰 <strong>Valor:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
+            <p>💳 <strong>Pagamento:</strong> <span style="color:${corPagamento}; font-weight:bold;">${os.statusPagamento || 'Aguardando'}</span> ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
+            <p>💰 <strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
             ${fotosHTML}
             <div class="os-card-actions">
-                <button class="btn-sm btn-wa-orcamento" onclick="waOrcamento('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟡 Orçamento</button>
-                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟢 Pronto</button>
+                <button class="btn-sm btn-wa-orcamento" onclick="abrirModalOrcamentoOpcoes('${os.idOS}', '${os.whatsapp}', '${os.modelo}')">🟡 Zap Orçamento</button>
+                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟢 Zap Pronto</button>
                 <button class="btn-sm btn-wa-comprovante" onclick="waEnviarComprovante('${os.idOS}')">📲 Via Zap</button>
             </div>
             <div class="os-card-subactions">
                 <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')">🖨️ OS Papel</button>
                 <button class="btn-sm" style="background:#a855f7;" onclick="imprimirEtiqueta('${os.idOS}')">🏷️ Etiqueta</button>
+                <button class="btn-sm btn-edit" onclick="editarOS('${os.idOS}')">✏️ Editar</button>
+                <button class="btn-sm btn-delete" onclick="excluirOS('${os.idOS}')">🗑️ Excluir</button>
             </div>
         `;
         osList.appendChild(card);
@@ -322,6 +404,39 @@ function atualizarPainel() {
     document.getElementById('totalLucro').innerText = `R$ ${(bruto - custo).toFixed(2)}`;
 }
 
+// MODAL DE ORÇAMENTO COM OPÇÕES DE TELAS
+function abrirModalOrcamentoOpcoes(osId, whatsapp, modelo) {
+    document.getElementById('orcamentoOSId').value = osId;
+    document.getElementById('orcamentoPhone').value = whatsapp;
+    document.getElementById('orcamentoModelo').value = modelo;
+    document.getElementById('orcamentoModal').style.display = 'flex';
+}
+
+function fecharModalOrcamento() {
+    document.getElementById('orcamentoModal').style.display = 'none';
+}
+
+function enviarWaOrcamentoOpcoes() {
+    const osId = document.getElementById('orcamentoOSId').value;
+    const whatsapp = document.getElementById('orcamentoPhone').value;
+    const modelo = document.getElementById('orcamentoModelo').value;
+    const num = whatsapp.replace(/\D/g, '');
+
+    const opt1 = document.getElementById('screenOpt1').value;
+    const opt2 = document.getElementById('screenOpt2').value;
+    const opt3 = document.getElementById('screenOpt3').value;
+
+    let texto = `Olá! Referente à sua *${osId}* do aparelho *${modelo}*:\n\n`;
+    texto += `Seguem as opções de orçamento para o reparo da tela:\n\n`;
+    if (opt1) texto += `🔹 *Opção 1:* ${opt1}\n`;
+    if (opt2) texto += `🔹 *Opção 2:* ${opt2}\n`;
+    if (opt3) texto += `🔹 *Opção 3:* ${opt3}\n`;
+    texto += `\nQual das opções podemos aprovar para dar início ao serviço?`;
+
+    window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
+    fecharModalOrcamento();
+}
+
 function waEnviarComprovante(osId) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (!os) return;
@@ -335,18 +450,13 @@ function waEnviarComprovante(osId) {
     texto += `*Aparelho:* ${os.modelo}\n`;
     texto += `*Defeito Relatado:* ${os.defeito}\n`;
     texto += `*Itens Trocados:* ${os.pecasTrocadas || 'Em análise'}\n`;
+    texto += `*Pagamento:* ${os.statusPagamento || 'Aguardando'} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}\n`;
     texto += `*Valor Estimado:* R$ ${os.valor.toFixed(2)}\n\n`;
     texto += `*Checklist de Entrada:*\n`;
     texto += `- Touch: ${chk.touch || 'N/T'}\n- Carga: ${chk.charge || 'N/T'}\n- Câmeras: ${chk.cameras || 'N/T'}\n- Bio/FaceID: ${chk.bio || 'N/T'}\n\n`;
     texto += `_Termo: Garantia de 90 dias para itens trocados. Aparelhos não retirados em 90 dias serão considerados abandonados._`;
 
     window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
-}
-
-function waOrcamento(telefone, osId, modelo, valor) {
-    const num = telefone.replace(/\D/g, '');
-    const msg = encodeURIComponent(`Olá! Referente à sua *${osId}* do aparelho *${modelo}*: O orçamento total ficou em *R$ ${parseFloat(valor).toFixed(2)}*. Podemos aprovar o serviço?`);
-    window.open(`https://wa.me/55${num}?text=${msg}`, '_blank');
 }
 
 function waPronto(telefone, osId, modelo, valor) {
@@ -361,8 +471,19 @@ function waPronto(telefone, osId, modelo, valor) {
     window.open(`https://wa.me/55${num}?text=${msg}`, '_blank');
 }
 
-function abrirModalOS() { document.getElementById('osModal').style.display = 'flex'; }
-function fecharModalOS() { document.getElementById('osModal').style.display = 'none'; }
+function abrirModalOS() { 
+    document.getElementById('osModal').style.display = 'flex'; 
+}
+
+function fecharModalOS() { 
+    document.getElementById('osModal').style.display = 'none'; 
+    document.getElementById('osForm').reset();
+    document.getElementById('editDocId').value = '';
+    document.getElementById('editOSId').value = '';
+    document.getElementById('modalTitle').innerText = "Criar Ordem de Serviço";
+    document.getElementById('btnSaveOS').innerText = "Salvar Ordem de Serviço";
+}
+
 function abrirModalEstoque() { document.getElementById('stockModal').style.display = 'flex'; renderizarEstoque(); }
 function fecharModalEstoque() { document.getElementById('stockModal').style.display = 'none'; }
 
@@ -473,6 +594,7 @@ function imprimirCupom(osId) {
 
             <p style="font-size: 12px; margin: 2px 0;"><strong>Defeito:</strong> ${os.defeito}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Peças Trocadas:</strong> ${os.pecasTrocadas || 'N/A'}</p>
+            <p style="font-size: 12px; margin: 2px 0;"><strong>Pagamento:</strong> ${os.statusPagamento || 'Aguardando'} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Obs/Riscos:</strong> ${os.obs}</p>
             <p style="font-size: 13px; margin: 5px 0;"><strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)}</p>
             
