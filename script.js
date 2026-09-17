@@ -1,4 +1,4 @@
-const SENHA_ACESSO = "123456"; 
+const SENHA_ACESSO = "855911"; 
 
 const firebaseConfig = {
     apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
@@ -432,13 +432,19 @@ function enviarWaOrcamentoOpcoes() {
     fecharModalOrcamento();
 }
 
-// ENVIAR COMPROVANTE DE ENTREGA + TERMO DE GARANTIA COM QR CODE VIA ZAP
 function waEnviarComprovante(osId) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (!os) return;
 
     const num = os.whatsapp.replace(/\D/g, '');
     const qrCodeGarantia = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=GARANTIA-${os.idOS}`;
+
+    let statusPagamentoTexto = "🟡 AGUARDANDO PAGAMENTO";
+    if (os.statusPagamento === "Pago") {
+        statusPagamentoTexto = `🟢 PAGO (R$ ${os.valor.toFixed(2)})`;
+    } else if (os.statusPagamento === "Parcial (Entrada/Resta)") {
+        statusPagamentoTexto = `🔵 PARCIAL ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}`;
+    }
 
     let texto = `*📱 OFICINA DO CELULAR - COMPROVANTE DE ENTREGA & GARANTIA*\n\n`;
     texto += `Prezado(a) *${os.cliente}*,\n`;
@@ -447,8 +453,8 @@ function waEnviarComprovante(osId) {
     texto += `📱 *Aparelho:* ${os.modelo}\n`;
     texto += `🔧 *Defeito Relatado:* ${os.defeito}\n`;
     texto += `⚙️ *Componente(s) Trocado(s):* ${os.pecasTrocadas || 'Reparo Efetuado'}\n`;
-    texto += `💰 *Valor Cobrado:* R$ ${os.valor.toFixed(2)}\n`;
-    texto += `💳 *Status Pagamento:* ${os.statusPagamento || 'Pago'} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}\n\n`;
+    texto += `💰 *Valor Total:* R$ ${os.valor.toFixed(2)}\n`;
+    texto += `💳 *Status do Pagamento:* ${statusPagamentoTexto}\n\n`;
     texto += `------------------------------------\n`;
     texto += `🛡️ *TERMO DE GARANTIA DIGITAL (90 DIAS)*\n`;
     texto += `Este comprovante assegura garantia de 90 dias a contar desta data para os componentes substituídos.\n`;
