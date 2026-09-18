@@ -20,7 +20,6 @@
         .app-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #1e293b; margin-bottom: 15px; }
         .header-left h1 { font-size: 18px; color: #ffffff; }
         
-        /* METRICS CLICÁVEIS (FILTROS) */
         .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
         .metric-card { background: #162238; padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #1e293b; cursor: pointer; transition: 0.2s; }
         .metric-card:hover, .metric-card.active { border-color: #38bdf8; background: #1e293b; }
@@ -116,7 +115,6 @@
         </header>
 
         <main class="content">
-            <!-- CARDS METRICAS CLICÁVEIS PARA FILTRAR OS STATUS -->
             <section class="metrics-grid">
                 <div class="metric-card" onclick="filtrarPorStatus('Todos')" id="cardFilterTodos"><span class="metric-value" id="countTotal">0</span><span class="metric-label">📋 Todas OS</span></div>
                 <div class="metric-card" onclick="filtrarPorStatus('Em análise')" id="cardFilterAnalise"><span class="metric-value" id="countAnalise">0</span><span class="metric-label">🔍 Em análise</span></div>
@@ -133,12 +131,12 @@
 
             <div class="action-bar">
                 <button class="btn-main-action" onclick="abrirModalOS()">➕ Nova OS</button>
-                <button class="btn-stock-action" onclick="abrirModalEstoque()">📦 Peças</button>
+                <button class="btn-stock-action" onclick="abrirModalEstoque()">📦 Peças / Preços</button>
                 <button class="btn-report-action" onclick="abrirModalRelatorio()">📊 Relatórios</button>
             </div>
 
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="🔍 Buscar por cliente, WhatsApp, IMEI ou OS..." onkeyup="buscarOS()">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar por cliente, WhatsApp, IMEI, fornecedor ou OS..." onkeyup="buscarOS()">
             </div>
 
             <div class="filter-status-title">
@@ -201,8 +199,19 @@
                     <option value="">Selecione uma peça...</option>
                 </select>
 
-                <label>Nome da Peça Principal (para dar baixa no Estoque)</label>
+                <label>Nome da Peça Principal</label>
                 <input type="text" id="usedPart" placeholder="Ex: Bateria iPhone 12 Gold">
+
+                <!-- NOVO SELETOR DE FORNECEDOR DA PEÇA -->
+                <label>Fornecedor da Peça</label>
+                <select id="partSupplier">
+                    <option value="Não Informado">Selecione o Fornecedor...</option>
+                    <option value="Maycon">Maycon</option>
+                    <option value="Than">Than</option>
+                    <option value="Agui">Agui</option>
+                    <option value="Suzy">Suzy</option>
+                    <option value="Outro">Outro</option>
+                </select>
 
                 <label>Custo da Peça (R$)</label>
                 <input type="number" step="0.01" id="partCost" placeholder="Ex: 80.00">
@@ -237,7 +246,7 @@
                 <button type="button" class="btn-clear" onclick="limparAssinatura()">Limpar Assinatura</button>
 
                 <div class="legal-disclaimer">
-                    ⚠️ O cliente concorda com o checklist e declara estar ciente do prazo máximo de 90 dias para retirada.
+                    ⚠️ O cliente concorda com el checklist e declara estar ciente do prazo máximo de 90 dias para retirada.
                 </div>
 
                 <button type="submit" class="btn-dark-full" id="btnSaveOS">Salvar Ordem de Serviço</button>
@@ -245,7 +254,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE ORÇAMENTO LIVRE (BATERIA, TELAS, PLACA, ETC.) -->
+    <!-- MODAL DE ORÇAMENTO DETALHADO -->
     <div id="orcamentoModal" class="modal-overlay" style="display: none;">
         <div class="modal-card">
             <div class="modal-header">
@@ -272,16 +281,25 @@
         </div>
     </div>
 
-    <!-- MODAL DE ESTOQUE -->
+    <!-- MODAL DE ESTOQUE E TABELA DE PREÇOS -->
     <div id="stockModal" class="modal-overlay" style="display: none;">
         <div class="modal-card">
             <div class="modal-header">
-                <h3 style="color:#fff;">Controle de Estoque</h3>
+                <h3 style="color:#fff;">Estoque & Consulta de Peças</h3>
                 <button class="btn-close" onclick="fecharModalEstoque()">✕</button>
             </div>
             <form id="stockForm" onsubmit="salvarPecaEstoque(event)">
-                <label>Nome da Peça / Aparelho</label>
+                <label>Nome da Peça / Modelo</label>
                 <input type="text" id="stockName" placeholder="Ex: Tela Incell iPhone 11" required>
+
+                <label>Fornecedor</label>
+                <select id="stockFormSupplier" required>
+                    <option value="Maycon">Maycon</option>
+                    <option value="Than">Than</option>
+                    <option value="Agui">Agui</option>
+                    <option value="Suzy">Suzy</option>
+                    <option value="Outro">Outro</option>
+                </select>
 
                 <label>Quantidade em Estoque</label>
                 <input type="number" id="stockQty" placeholder="Ex: 5" required>
@@ -289,10 +307,10 @@
                 <label>Custo Unitário (R$)</label>
                 <input type="number" step="0.01" id="stockCost" placeholder="Ex: 120.00" required>
 
-                <button type="submit" class="btn-dark" style="margin-bottom: 15px;">Adicionar Peça</button>
+                <button type="submit" class="btn-dark" style="margin-bottom: 15px;">Adicionar ao Estoque</button>
             </form>
 
-            <h4 style="color:#38bdf8; margin-bottom: 10px;">Peças Cadastradas</h4>
+            <h4 style="color:#38bdf8; margin-bottom: 10px;">Histórico & Peças Salvas</h4>
             <div id="stockList"></div>
         </div>
     </div>
