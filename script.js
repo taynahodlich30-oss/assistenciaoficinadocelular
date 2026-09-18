@@ -137,6 +137,7 @@ function editarOS(osId) {
     document.getElementById('serviceDescription').value = os.descricaoServico || '';
     document.getElementById('deviceObs').value = os.obs || '';
     document.getElementById('usedPart').value = os.peca || '';
+    document.getElementById('partSupplier').value = os.fornecedorPeca || 'Não Informado';
     document.getElementById('partCost').value = os.custoPeca || '';
     document.getElementById('serviceStatus').value = os.status || 'Em análise';
     document.getElementById('paymentStatus').value = os.statusPagamento || 'Aguardando Pagamento';
@@ -157,7 +158,6 @@ function editarOS(osId) {
     abrirModalOS();
 }
 
-// FILTRAR POR ABAS (CLICANDO NAS MÉTRICAS)
 function filtrarPorStatus(status) {
     statusFiltroAtual = status;
     document.querySelectorAll('.metric-card').forEach(card => card.classList.remove('active'));
@@ -176,6 +176,7 @@ async function salvarPecaEstoque(e) {
     e.preventDefault();
     const novaPeca = {
         nome: document.getElementById('stockName').value,
+        fornecedor: document.getElementById('stockFormSupplier').value,
         qtd: parseInt(document.getElementById('stockQty').value) || 0,
         custo: parseFloat(document.getElementById('stockCost').value) || 0
     };
@@ -204,7 +205,7 @@ function renderizarEstoque() {
         div.innerHTML = `
             <div>
                 <strong style="color:#38bdf8">${item.nome}</strong><br>
-                <small style="color:#cbd5e1">Qtd: ${item.qtd} un | R$ ${item.custo.toFixed(2)}</small>
+                <small style="color:#cbd5e1">Fornecedor: <b style="color:#a855f7;">${item.fornecedor || 'Não especificado'}</b> | Qtd: ${item.qtd} un | R$ ${item.custo.toFixed(2)}</small>
             </div>
             ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;">⚠️ Baixo</span>' : ''}
         `;
@@ -218,7 +219,7 @@ function atualizarSelectEstoque() {
     select.innerHTML = '<option value="">Selecione uma peça...</option>';
     estoquePecas.forEach((p, idx) => {
         if (p.qtd > 0) {
-            select.innerHTML += `<option value="${idx}">${p.nome} (${p.qtd} un) - R$ ${p.custo.toFixed(2)}</option>`;
+            select.innerHTML += `<option value="${idx}">${p.nome} (${p.fornecedor || 'Geral'}) - R$ ${p.custo.toFixed(2)}</option>`;
         }
     });
 }
@@ -228,6 +229,7 @@ function selecionarPecaEstoque() {
     if (idx !== "") {
         const peca = estoquePecas[idx];
         document.getElementById('usedPart').value = peca.nome;
+        document.getElementById('partSupplier').value = peca.fornecedor || 'Não Informado';
         document.getElementById('partCost').value = peca.custo;
     }
 }
@@ -297,6 +299,8 @@ function salvarOS(event) {
     const osNumber = osIdExistente || ("OS-" + Math.floor(100000 + Math.random() * 900000));
     
     const pecaUtilizada = document.getElementById('usedPart').value || "Nenhuma";
+    const fornecedorPeca = document.getElementById('partSupplier').value || "Não Informado";
+    const custoPecaVal = parseFloat(document.getElementById('partCost').value) || 0;
 
     const novaOS = {
         idDoc: docIdExistente || undefined,
@@ -319,7 +323,8 @@ function salvarOS(event) {
             signal: document.getElementById('checkSignal').value
         },
         peca: pecaUtilizada,
-        custoPeca: parseFloat(document.getElementById('partCost').value) || 0,
+        fornecedorPeca: fornecedorPeca,
+        custoPeca: custoPecaVal,
         status: document.getElementById('serviceStatus').value,
         statusPagamento: document.getElementById('paymentStatus').value,
         detalhesPagamento: document.getElementById('paymentDetails').value || "",
@@ -327,6 +332,17 @@ function salvarOS(event) {
         fotos: fotosTemp,
         assinatura: canvas.toDataURL()
     };
+
+    // Guarda no histórico de estoque se informou peça e custo
+    if (pecaUtilizada !== "Nenhuma" && custoPecaVal > 0) {
+        const jaExisteEmEstoque = estoquePecas.find(p => p.nome.toLowerCase() === pecaUtilizada.toLowerCase() && p.fornecedor === fornecedorPeca);
+        if (!jaExisteEmEstoque) {
+            const itemEstoque = { nome: pecaUtilizada, fornecedor: fornecedorPeca, qtd: 0, custo: custoPecaVal };
+            estoquePecas.unshift(itemEstoque);
+            localStorage.setItem('oficina_stock_db', JSON.stringify(estoquePecas));
+            if (db) { try { db.collection('estoque_pecas').add(itemEstoque); } catch(e){} }
+        }
+    }
 
     if (!docIdExistente && pecaUtilizada !== "Nenhuma") {
         darBaixaEstoque(pecaUtilizada);
@@ -373,7 +389,6 @@ function atualizarPainel() {
     document.getElementById('totalCusto').innerText = `R$ ${custo.toFixed(2)}`;
     document.getElementById('totalLucro').innerText = `R$ ${(bruto - custo).toFixed(2)}`;
 
-    // FILTRAGEM DE OS NA TELA
     const ordensFiltradas = ordensServico.filter(os => {
         if (statusFiltroAtual === "Todos") return true;
         return os.status === statusFiltroAtual;
@@ -407,6 +422,7 @@ function atualizarPainel() {
             <p>🔧 <strong>Defeito Relatado:</strong> ${os.defeito}</p>
             <p style="color: #4ade80;">⚙️ <strong>Componentes Trocados:</strong> ${os.pecasTrocadas || 'Nenhum registrado'}</p>
             <p style="color: #cbd5e1; font-size: 12px;">📝 <strong>Descrição:</strong> ${os.descricaoServico || 'Sem detalhes'}</p>
+            <p>🏷️ <strong>Fornecedor Peça:</strong> <strong style="color: #a855f7;">${os.fornecedorPeca || 'Não Informado'}</strong></p>
             <p>💳 <strong>Pagamento:</strong> <span style="color:${corPagamento}; font-weight:bold;">${os.statusPagamento || 'Aguardando'}</span> ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
             <p>💰 <strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
             ${fotosHTML}
@@ -457,14 +473,12 @@ function enviarWaOrcamentoOpcoes() {
     if (opt3) texto += `🔹 *Opção 3:* ${opt3}\n`;
     texto += `\nQual das opções podemos aprovar para darmos início ao serviço?`;
 
-    // Atualiza o status para Em orçamento
     alterarStatusOS(osId, 'Em orçamento');
 
     window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
     fecharModalOrcamento();
 }
 
-// NOTIFICAÇÃO FORMAL DE SERVIÇO APROVADO
 function waNotificarAprovado(osId) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (!os) return;
@@ -649,6 +663,7 @@ function imprimirCupom(osId) {
 
             <p style="font-size: 12px; margin: 2px 0;"><strong>Defeito:</strong> ${os.defeito}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Peças Trocadas:</strong> ${os.pecasTrocadas || 'N/A'}</p>
+            <p style="font-size: 12px; margin: 2px 0;"><strong>Fornecedor:</strong> ${os.fornecedorPeca || 'N/A'}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Pagamento:</strong> ${os.statusPagamento || 'Aguardando'} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Obs/Riscos:</strong> ${os.obs}</p>
             <p style="font-size: 13px; margin: 5px 0;"><strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)}</p>
