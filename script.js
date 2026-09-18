@@ -1,4 +1,4 @@
-const SENHA_ACESSO = "855911"; 
+const SENHA_ACESSO = "123456"; 
 
 const firebaseConfig = {
     apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
@@ -25,6 +25,7 @@ let estoquePecas = [];
 let fotosTemp = [];
 let canvas, ctx;
 let isDrawing = false;
+let statusFiltroAtual = "Todos";
 
 function validarSenha() {
     const input = document.getElementById('passwordInput').value;
@@ -137,7 +138,7 @@ function editarOS(osId) {
     document.getElementById('deviceObs').value = os.obs || '';
     document.getElementById('usedPart').value = os.peca || '';
     document.getElementById('partCost').value = os.custoPeca || '';
-    document.getElementById('serviceStatus').value = os.status || 'Em orçamento';
+    document.getElementById('serviceStatus').value = os.status || 'Em análise';
     document.getElementById('paymentStatus').value = os.statusPagamento || 'Aguardando Pagamento';
     document.getElementById('paymentDetails').value = os.detalhesPagamento || '';
     document.getElementById('servicePrice').value = os.valor || '';
@@ -154,6 +155,21 @@ function editarOS(osId) {
     document.getElementById('modalTitle').innerText = `Editar ${os.idOS}`;
     document.getElementById('btnSaveOS').innerText = "Atualizar Ordem de Serviço";
     abrirModalOS();
+}
+
+// FILTRAR POR ABAS (CLICANDO NAS MÉTRICAS)
+function filtrarPorStatus(status) {
+    statusFiltroAtual = status;
+    document.querySelectorAll('.metric-card').forEach(card => card.classList.remove('active'));
+
+    if (status === 'Todos') document.getElementById('cardFilterTodos').classList.add('active');
+    if (status === 'Em análise') document.getElementById('cardFilterAnalise').classList.add('active');
+    if (status === 'Em orçamento') document.getElementById('cardFilterOrcamento').classList.add('active');
+    if (status === 'Em reparo') document.getElementById('cardFilterReparo').classList.add('active');
+    if (status === 'Pronto') document.getElementById('cardFilterProntos').classList.add('active');
+
+    document.getElementById('filterCurrentTitle').innerText = status === 'Todos' ? 'Exibindo: Todas as Ordens de Serviço' : `Exibindo: Categoria "${status}"`;
+    atualizarPainel();
 }
 
 async function salvarPecaEstoque(e) {
@@ -334,17 +350,36 @@ function atualizarPainel() {
     osList.innerHTML = '';
 
     let total = ordensServico.length;
-    let analise = 0, reparo = 0, prontos = 0;
+    let analise = 0, orcamento = 0, reparo = 0, prontos = 0;
     let bruto = 0, custo = 0;
 
     ordensServico.forEach((os) => {
         if (os.status === 'Em análise') analise++;
+        if (os.status === 'Em orçamento') orcamento++;
         if (os.status === 'Em reparo') reparo++;
         if (os.status === 'Pronto') prontos++;
 
         bruto += (os.valor || 0);
         custo += (os.custoPeca || 0);
+    });
 
+    document.getElementById('countTotal').innerText = total;
+    document.getElementById('countAnalise').innerText = analise;
+    document.getElementById('countOrcamento').innerText = orcamento;
+    document.getElementById('countReparo').innerText = reparo;
+    document.getElementById('countProntos').innerText = prontos;
+
+    document.getElementById('totalBruto').innerText = `R$ ${bruto.toFixed(2)}`;
+    document.getElementById('totalCusto').innerText = `R$ ${custo.toFixed(2)}`;
+    document.getElementById('totalLucro').innerText = `R$ ${(bruto - custo).toFixed(2)}`;
+
+    // FILTRAGEM DE OS NA TELA
+    const ordensFiltradas = ordensServico.filter(os => {
+        if (statusFiltroAtual === "Todos") return true;
+        return os.status === statusFiltroAtual;
+    });
+
+    ordensFiltradas.forEach((os) => {
         let fotosHTML = '';
         if (os.fotos && os.fotos.length > 0) {
             fotosHTML = '<div class="preview-container">';
@@ -362,8 +397,8 @@ function atualizarPainel() {
             <div class="os-card-header">
                 <strong>${os.idOS} - ${os.cliente}</strong>
                 <select class="status-select" onchange="alterarStatusOS('${os.idOS}', this.value)">
-                    <option value="Em orçamento" ${os.status === 'Em orçamento' ? 'selected' : ''}>Em orçamento</option>
                     <option value="Em análise" ${os.status === 'Em análise' ? 'selected' : ''}>Em análise</option>
+                    <option value="Em orçamento" ${os.status === 'Em orçamento' ? 'selected' : ''}>Em orçamento</option>
                     <option value="Em reparo" ${os.status === 'Em reparo' ? 'selected' : ''}>Em reparo</option>
                     <option value="Pronto" ${os.status === 'Pronto' ? 'selected' : ''}>Pronto</option>
                 </select>
@@ -376,8 +411,9 @@ function atualizarPainel() {
             <p>💰 <strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
             ${fotosHTML}
             <div class="os-card-actions">
-                <button class="btn-sm btn-wa-orcamento" onclick="abrirModalOrcamentoOpcoes('${os.idOS}', '${os.whatsapp}', '${os.modelo}')">🟡 Zap Orçamento</button>
-                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟢 Zap Pronto</button>
+                <button class="btn-sm btn-wa-orcamento" onclick="abrirModalOrcamentoOpcoes('${os.idOS}', '${os.whatsapp}', '${os.modelo}')">🟡 Orçamento</button>
+                <button class="btn-sm btn-wa-aprovado" onclick="waNotificarAprovado('${os.idOS}')">👍 Aprovado</button>
+                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟢 Pronto</button>
                 <button class="btn-sm btn-wa-comprovante" onclick="waEnviarComprovante('${os.idOS}')">📲 Via Zap</button>
             </div>
             <div class="os-card-subactions">
@@ -389,15 +425,6 @@ function atualizarPainel() {
         `;
         osList.appendChild(card);
     });
-
-    document.getElementById('countTotal').innerText = total;
-    document.getElementById('countAnalise').innerText = analise;
-    document.getElementById('countReparo').innerText = reparo;
-    document.getElementById('countProntos').innerText = prontos;
-
-    document.getElementById('totalBruto').innerText = `R$ ${bruto.toFixed(2)}`;
-    document.getElementById('totalCusto').innerText = `R$ ${custo.toFixed(2)}`;
-    document.getElementById('totalLucro').innerText = `R$ ${(bruto - custo).toFixed(2)}`;
 }
 
 function abrirModalOrcamentoOpcoes(osId, whatsapp, modelo) {
@@ -415,21 +442,43 @@ function enviarWaOrcamentoOpcoes() {
     const osId = document.getElementById('orcamentoOSId').value;
     const whatsapp = document.getElementById('orcamentoPhone').value;
     const modelo = document.getElementById('orcamentoModelo').value;
+    const serviceType = document.getElementById('orcamentoServiceType').value || "Reparo do Aparelho";
     const num = whatsapp.replace(/\D/g, '');
 
     const opt1 = document.getElementById('screenOpt1').value;
     const opt2 = document.getElementById('screenOpt2').value;
     const opt3 = document.getElementById('screenOpt3').value;
 
-    let texto = `Olá! Referente à sua *${osId}* do aparelho *${modelo}*:\n\n`;
-    texto += `Seguem as opções de orçamento para o reparo da tela:\n\n`;
+    let texto = `*📱 OFICINA DO CELULAR - ORÇAMENTO DE SERVIÇO*\n\n`;
+    texto += `Olá! Segue o orçamento para o seu *${modelo}* (${osId}):\n\n`;
+    texto += `🔧 *Serviço Avaliado:* ${serviceType}\n\n`;
     if (opt1) texto += `🔹 *Opção 1:* ${opt1}\n`;
     if (opt2) texto += `🔹 *Opção 2:* ${opt2}\n`;
     if (opt3) texto += `🔹 *Opção 3:* ${opt3}\n`;
-    texto += `\nQual das opções podemos aprovar para dar início ao serviço?`;
+    texto += `\nQual das opções podemos aprovar para darmos início ao serviço?`;
+
+    // Atualiza o status para Em orçamento
+    alterarStatusOS(osId, 'Em orçamento');
 
     window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
     fecharModalOrcamento();
+}
+
+// NOTIFICAÇÃO FORMAL DE SERVIÇO APROVADO
+function waNotificarAprovado(osId) {
+    const os = ordensServico.find(item => item.idOS === osId);
+    if (!os) return;
+
+    const num = os.whatsapp.replace(/\D/g, '');
+    alterarStatusOS(osId, 'Em reparo');
+
+    let texto = `*📱 OFICINA DO CELULAR - SERVIÇO APROVADO*\n\n`;
+    texto += `Prezado(a) *${os.cliente}*,\n`;
+    texto += `Confirmamos a aprovação do orçamento para o seu aparelho *${os.modelo}* (${os.idOS}).\n\n`;
+    texto += `⚙️ Nossos técnicos já iniciaram a manutenção do seu dispositivo. Assim que o serviço for concluído e passar nos testes de qualidade, entraremos em contato para a retirada.\n\n`;
+    texto += `Agradecemos a confiança!`;
+
+    window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
 }
 
 function waEnviarComprovante(osId) {
