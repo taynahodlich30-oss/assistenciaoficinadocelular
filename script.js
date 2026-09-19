@@ -1,4 +1,4 @@
-const SENHA_ACESSO = "123456"; 
+const SENHA_ACESSO = "855911"; 
 
 const firebaseConfig = {
     apiKey: "AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc",
