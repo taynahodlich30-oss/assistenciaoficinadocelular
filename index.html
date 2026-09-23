@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oficina do Celular - Sistema Completo</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b1329">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: #0b1329; color: #ffffff; padding: 15px; -webkit-tap-highlight-color: transparent; }
+        
+        .login-container { display: flex; justify-content: center; align-items: center; min-height: 85vh; }
+        .login-card { background: #162238; padding: 30px 20px; border-radius: 16px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .header-title { font-size: 22px; font-weight: 800; color: #38bdf8; margin-bottom: 8px; }
+        .login-card p { color: #94a3b8; font-size: 14px; margin-bottom: 20px; }
+        
+        .app-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #1e293b; margin-bottom: 15px; }
+        .header-left h1 { font-size: 18px; color: #ffffff; }
+        
+        .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
+        .metric-card { background: #162238; padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #1e293b; cursor: pointer; transition: 0.2s; }
+        .metric-card:hover, .metric-card.active { border-color: #38bdf8; background: #1e293b; }
+        .metric-value { display: block; font-size: 20px; font-weight: 800; color: #38bdf8; }
+        .metric-label { font-size: 11px; color: #94a3b8; }
+
+        .financial-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
+        .fin-card { background: #0f172a; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #334155; }
+        .fin-value { display: block; font-size: 14px; font-weight: 700; }
+        .fin-bruto { color: #38bdf8; }
+        .fin-custo { color: #f87171; }
+        .fin-lucro { color: #4ade80; }
+
+        .action-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
+
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 4px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #ffffff; font-size: 14px; outline: none; }
+        input:focus, select:focus, textarea:focus { border-color: #38bdf8; }
+        label { font-size: 12px; color: #cbd5e1; font-weight: 600; display: block; text-align: left; }
+        
+        button { cursor: pointer; border: none; font-weight: 700; border-radius: 8px; transition: 0.2s; }
+        .btn-dark { width: 100%; background: #38bdf8; color: #0b1329; padding: 14px; font-size: 16px; }
+        .btn-main-action { background: #38bdf8; color: #0b1329; padding: 12px 6px; font-size: 12px; }
+        .btn-stock-action { background: #a855f7; color: #ffffff; padding: 12px 6px; font-size: 12px; }
+        .btn-report-action { background: #3b82f6; color: #ffffff; padding: 12px 6px; font-size: 12px; }
+        
+        .btn-logout { background: #ef4444; color: #ffffff; padding: 8px 14px; font-size: 12px; }
+        .btn-close { background: transparent; color: #94a3b8; font-size: 20px; float: right; }
+        .btn-clear { background: #334155; color: #ffffff; padding: 8px; font-size: 12px; margin-top: 5px; width: 100%; }
+        .btn-dark-full { width: 100%; background: #22c55e; color: #ffffff; padding: 16px; font-size: 16px; margin-top: 10px; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: flex-end; z-index: 1000; }
+        .modal-card { background: #162238; padding: 20px; border-radius: 20px 20px 0 0; width: 100%; max-height: 90vh; overflow-y: auto; border-top: 1px solid #334155; }
+        
+        .checklist-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #334155; }
+        .checklist-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: #cbd5e1; }
+        .checklist-item select { width: 70px; padding: 4px; margin: 0; font-size: 11px; }
+        .form-tabs { display: flex; gap: 8px; margin: 18px 0 12px; }
+        .form-tab { flex: 1; padding: 12px 8px; color: #cbd5e1; background: #0f172a; border: 1px solid #334155; }
+        .form-tab.active { color: #0b1329; background: #38bdf8; border-color: #38bdf8; }
+        .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 8px; margin: 8px 0 16px; }
+        .choice-item { display: flex; align-items: center; gap: 7px; padding: 11px 9px; border: 1px solid #334155; background: #0f172a; border-radius: 9px; cursor: pointer; }
+        .choice-item:has(input:checked) { border-color: #38bdf8; background: #14334b; color: #fff; }
+        .choice-item input { width: 16px; height: 16px; margin: 0; flex-shrink: 0; }
+
+        .os-card { background: #162238; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #1e293b; text-align: left; }
+        .os-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; color: #38bdf8; }
+        .os-card p { font-size: 13px; color: #cbd5e1; margin-bottom: 5px; }
+        .status-select { width: auto; padding: 4px 8px; font-size: 12px; margin: 0; background: #0f172a; color: #38bdf8; font-weight: bold; border-color: #38bdf8; }
+
+        .os-card-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 10px; }
+        .os-card-subactions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 4px; }
+        
+        .btn-sm { padding: 8px 2px; font-size: 10px; background: #334155; color: #fff; }
+        .btn-wa-orcamento { background: #eab308; color: #000; }
+        .btn-wa-aprovado { background: #3b82f6; color: #fff; }
+        .btn-wa-pronto { background: #22c55e; color: #fff; }
+        .btn-wa-comprovante { background: #25d366; color: #fff; }
+        .btn-edit { background: #0284c7; color: #fff; }
+        .btn-delete { background: #ef4444; color: #fff; }
+
+        .filter-status-title { font-size: 13px; color: #38bdf8; margin-bottom: 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+
+        .preview-container { display: flex; gap: 8px; overflow-x: auto; margin-top: 8px; margin-bottom: 12px; }
+        .preview-thumb { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; border: 1px solid #38bdf8; }
+
+        canvas { background: #ffffff; border-radius: 8px; width: 100%; height: 120px; touch-action: none; margin-top: 5px; }
+        .legal-disclaimer { font-size: 11px; color: #94a3b8; background: #0f172a; padding: 10px; border-radius: 8px; margin: 10px 0; text-align: justify; }
+        .error-text { color: #ef4444; font-size: 13px; margin-top: 10px; }
+
+        .stock-item { background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .report-box { background: #0f172a; padding: 12px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 10px; }
+
+        body { background: radial-gradient(circle at top left, #163457 0, #0b1329 38%, #081021 100%); min-height: 100vh; }
+        .app-container { max-width: 1160px; margin: 0 auto; }
+        .app-header { padding: 17px 20px; background: rgba(22,34,56,.82); border: 1px solid #334155; border-radius: 18px; box-shadow: 0 15px 40px #050b19aa; }
+        .app-header h1 { font-size: clamp(19px, 3vw, 28px); letter-spacing: -.03em; }
+        .login-card { border: 1px solid #334155; border-radius: 22px; }
+        .login-card p { color: #a7bdd3; }
+        .login-card input { text-align: left; }
+        .content { padding: 12px 0 40px; }
+        .metrics-grid { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 12px; margin-bottom: 14px; }
+        .metric-card, .fin-card, .os-card { border-color: #304562; box-shadow: 0 10px 25px #050b1940; }
+        .metric-card { padding: 18px 10px; }
+        .metric-value { font-size: 25px; }
+        .metric-label { font-size: 12px; }
+        .financial-grid { gap: 12px; }
+        .fin-card { padding: 16px 10px; }
+        .fin-value { font-size: clamp(14px, 2.4vw, 20px); }
+        .action-bar { grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .action-bar button, .filter-clear { min-height: 46px; font-size: 13px; }
+        .search-container { padding: 16px; border: 1px solid #304562; border-radius: 16px; background: #162238; margin-bottom: 16px; }
+        .search-container #searchInput { margin: 0 0 10px; }
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
+        .filter-grid input, .filter-grid select { margin: 0; min-width: 0; }
+        .filter-clear { padding: 0 16px; background: #304562; color: white; }
+        .results-count { font-size: 12px; color: #94a3b8; margin-top: 10px; }
+        .os-card { border-radius: 16px; padding: 18px; }
+        .os-card-header { gap: 10px; }
+        .os-card-actions, .os-card-subactions { gap: 8px; margin-top: 10px; }
+        .btn-sm { min-height: 40px; font-size: 12px; padding: 8px 5px; }
+        .modal-card { max-width: 680px; margin: auto; max-height: 92vh; border: 1px solid #334155; border-radius: 20px; }
+        .app-notice { padding: 13px 16px; border-radius: 12px; margin-bottom: 14px; background: #0f473d; color: #dcfff4; border: 1px solid #14b8a6; }
+        .app-notice.error { background: #522531; border-color: #fb7185; color: #fff1f2; }
+        .empty-state { text-align: center; padding: 40px 16px; border: 1px dashed #64748b; border-radius: 16px; color: #cbd5e1; }
+        .service-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px; border-radius: 9px; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; font-size: 13px; margin-bottom: 7px; }
+        .service-row span { flex: 1; }
+        .service-row button { background:#334155; color:white; padding:8px; }
+        button:disabled { opacity: .55; cursor: wait; }
+        @media(max-width: 640px) {
+            body { padding: 10px; }
+            .app-header { padding: 15px; }
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .filter-grid { grid-template-columns: 1fr 1fr; }
+            .filter-clear { grid-column: 1 / -1; }
+            .os-card-actions, .os-card-subactions { grid-template-columns: repeat(2, 1fr); }
+            .action-bar { grid-template-columns: repeat(2, 1fr); }
+            .modal-card { margin: auto 0 0; border-radius: 20px 20px 0 0; }
+        }
+
+        #printSection { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #printSection, #printSection * { visibility: visible; }
+            #printSection { display: block !important; position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="header-title">📱 Oficina do Celular</div>
+            <p>Acesso do Lojista</p>
+            <input type="email" id="emailInput" autocomplete="username" placeholder="E-mail de acesso">
+            <input type="password" id="passwordInput" autocomplete="current-password" placeholder="Sua senha de acesso" onkeydown="if(event.key==='Enter') validarSenha()">
+            <button class="btn-dark" id="loginButton" onclick="validarSenha()">Entrar no Sistema</button>
+            <p id="loginError" class="error-text"></p>
+        </div>
+    </div>
+
+    <div id="appScreen" class="app-container" style="display: none;">
+        <header class="app-header">
+            <div>
+                <h1>📱 Oficina do Celular</h1>
+                <p style="font-size: 12px; color: #94a3b8;">Gestão Completa de Bancada</p>
+            </div>
+            <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+        </header>
+
+        <main class="content">
+            <div id="appNotice" class="app-notice" role="status" aria-live="polite" style="display:none"></div>
+            <section class="metrics-grid">
+                <div class="metric-card" onclick="filtrarPorStatus('Todos')" id="cardFilterTodos"><span class="metric-value" id="countTotal">0</span><span class="metric-label">📋 Todas OS</span></div>
+                <div class="metric-card" onclick="filtrarPorStatus('Em análise')" id="cardFilterAnalise"><span class="metric-value" id="countAnalise">0</span><span class="metric-label">🔍 Em análise</span></div>
+                <div class="metric-card" onclick="filtrarPorStatus('Em orçamento')" id="cardFilterOrcamento"><span class="metric-value" id="countOrcamento">0</span><span class="metric-label">🟡 Em orçamento</span></div>
+                <div class="metric-card" onclick="filtrarPorStatus('Em reparo')" id="cardFilterReparo"><span class="metric-value" id="countReparo">0</span><span class="metric-label">⚙️ Em reparo</span></div>
+                <div class="metric-card" onclick="filtrarPorStatus('Pronto')" id="cardFilterProntos"><span class="metric-value" id="countProntos">0</span><span class="metric-label">🟢 Prontos</span></div>
+            </section>
+
+            <section class="financial-grid">
+                <div class="fin-card"><span class="fin-value fin-bruto" id="totalBruto">R$ 0</span><span class="metric-label">🧾 Total cobrado</span></div>
+                <div class="fin-card"><span class="fin-value fin-lucro" id="totalRecebido">R$ 0</span><span class="metric-label">💵 Total recebido</span></div>
+                <div class="fin-card"><span class="fin-value fin-custo" id="totalCusto">R$ 0</span><span class="metric-label">💸 Peças</span></div>
+                <div class="fin-card"><span class="fin-value fin-lucro" id="totalLucro">R$ 0</span><span class="metric-label">📈 Recebido menos peças</span></div>
+            </section>
+
+            <div class="action-bar">
+                <button class="btn-main-action" onclick="abrirModalOS()">➕ Nova OS</button>
+                <button class="btn-stock-action" onclick="abrirModalEstoque()">📦 Peças / Preços</button>
+                <button class="btn-report-action" onclick="abrirModalRelatorio()">📊 Relatórios</button>
+                <button class="btn-report-action" onclick="abrirModalServicos()">🛠️ Serviços avulsos</button>
+                <button class="btn-stock-action" onclick="abrirModalBackup()">💾 Backup</button>
+            </div>
+
+            <div class="search-container">
+                <input type="search" id="searchInput" placeholder="🔍 Cliente, aparelho, telefone, IMEI ou OS" oninput="buscarOS()">
+                <div class="filter-grid">
+                    <select id="paymentFilter" onchange="buscarOS()" aria-label="Filtrar pagamento"><option value="Todos">Todos os pagamentos</option><option value="Pago">Pago</option><option value="Aguardando Pagamento">Aguardando pagamento</option><option value="Parcial (Entrada/Resta)">Parcial</option></select>
+                    <input type="month" id="monthFilter" onchange="buscarOS()" aria-label="Filtrar mês da OS">
+                    <button type="button" class="filter-clear" onclick="limparFiltros()">Limpar filtros</button>
+                </div>
+                <p id="resultsCount" class="results-count"></p>
+            </div>
+
+            <div class="filter-status-title">
+                <span id="filterCurrentTitle">Exibindo: Todas as Ordens de Serviço</span>
+                <button style="background:transparent; color:#38bdf8; font-size:11px;" onclick="filtrarPorStatus('Todos')">Limpar filtro</button>
+            </div>
+
+            <section id="osList" class="os-list"></section>
+        </main>
+    </div>
+
+    <!-- MODAL DE OS -->
+    <div id="osModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="color:#fff;" id="modalTitle">Criar Ordem de Serviço</h3>
+                <button class="btn-close" onclick="fecharModalOS()">✕</button>
+            </div>
+            <form id="osForm" onsubmit="salvarOS(event)">
+                <input type="hidden" id="editDocId">
+                <input type="hidden" id="editOSId">
+
+                <label>WhatsApp / Telefone</label>
+                <input type="tel" id="clientPhone" placeholder="Ex: 11999998888" onblur="verificarHistoricoCliente()" required>
+                <div id="clientHistoryAlert" style="font-size: 11px; color: #38bdf8; margin-bottom: 8px;"></div>
+
+                <label>Nome do Cliente</label>
+                <input type="text" id="clientName" placeholder="Ex: João Silva" required>
+
+                <label>Modelo do Aparelho</label>
+                <input type="text" id="deviceModel" placeholder="Ex: iPhone 12" required>
+
+                <label>IMEI / Série</label>
+                <input type="text" id="deviceIMEI" placeholder="Ex: 354128" required>
+
+                <label>Check-list de Entrada</label>
+                <div class="checklist-grid">
+                    <div class="checklist-item"><span>Tela / Touch</span><select id="checkTouch"><option value="OK">OK</option><option value="Defeito">Defeito</option><option value="N/T">N/T</option></select></div>
+                    <div class="checklist-item"><span>Carregamento</span><select id="checkCharge"><option value="OK">OK</option><option value="Defeito">Defeito</option><option value="N/T">N/T</option></select></div>
+                    <div class="checklist-item"><span>Câmeras</span><select id="checkCameras"><option value="OK">OK</option><option value="Defeito">Defeito</option><option value="N/T">N/T</option></select></div>
+                    <div class="checklist-item"><span>Face ID/Bio</span><select id="checkBio"><option value="OK">OK</option><option value="Defeito">Defeito</option><option value="N/T">N/T</option></select></div>
+                    <div class="checklist-item"><span>Som / Mic</span><select id="checkAudio"><option value="OK">OK</option><option value="Defeito">Defeito</option><option value="N/T">N/T</option></select></div>
+                    <div class="checklist-item"><span>Wi-Fi / Sinal</span><select id="checkSignal"><option value="OK">OK</option><option value="Defeito">Defeito</option><option value="N/T">N/T</option></select></div>
+                </div>
+
+                <label>Defeito Relatado pelo Cliente</label>
+                <input type="text" id="deviceDefect" placeholder="Ex: Não liga / Bateria descarregando rápido" required>
+
+                <div id="partsPanel">
+                    <label>Componentes Trocados / Substituídos</label>
+                    <div id="componentChoices" class="choice-grid"></div>
+                    <label>Outro componente (opcional)</label>
+                    <input type="text" id="replacedParts" placeholder="Ex: componente específico">
+                </div>
+
+                <label>Descrição detalhada do serviço realizado</label>
+                <textarea id="serviceDescription" rows="2" placeholder="Ex: Substituição de bateria e limpeza química na placa..."></textarea>
+
+                <label>Observações / Riscos do Aparelho</label>
+                <textarea id="deviceObs" rows="2" placeholder="Ex: Trincado na traseira, tampa solta..."></textarea>
+
+                <label>Selecione Peça do Estoque (Opcional)</label>
+                <select id="stockPartSelect" onchange="selecionarPecaEstoque()">
+                    <option value="">Selecione uma peça...</option>
+                </select>
+                <small style="display:block;color:#94a3b8;margin-bottom:12px">Selecione uma peça cadastrada para dar baixa automática no estoque quando salvar a OS.</small>
+
+                <label>Nome da Peça Principal</label>
+                <select id="partType" onchange="document.getElementById('stockPartSelect').value='';atualizarVariantesPeca()"><option value="">Selecione o componente...</option></select>
+                <select id="partVariant" onchange="document.getElementById('stockPartSelect').value='';preencherNomePeca()"><option value="">Selecione a opção...</option></select>
+                <p id="partSummary" style="color:#38bdf8;font-size:12px;margin:0 0 12px"></p>
+
+                <!-- NOVO SELETOR DE FORNECEDOR DA PEÇA -->
+                <label>Fornecedor da Peça</label>
+                <select id="partSupplier">
+                    <option value="Não Informado">Selecione o Fornecedor...</option>
+                    <option value="Maycon">Maycon</option>
+                    <option value="Than">Than</option>
+                    <option value="Agui">Agui</option>
+                    <option value="Suzy">Suzy</option>
+                    <option value="Outro">Outro</option>
+                </select>
+
+                <label>Custo da Peça (R$)</label>
+                <input type="number" step="0.01" id="partCost" placeholder="Ex: 80.00">
+
+                <label>Status do Serviço</label>
+                <select id="serviceStatus" required>
+                    <option value="Em análise">Em análise</option>
+                    <option value="Em orçamento">Em orçamento</option>
+                    <option value="Em reparo">Em reparo</option>
+                    <option value="Pronto">Pronto</option>
+                </select>
+
+                <label>Status do Pagamento</label>
+                <select id="paymentStatus" required>
+                    <option value="Aguardando Pagamento">Aguardando Pagamento</option>
+                    <option value="Pago">Pago (100%)</option>
+                    <option value="Parcial (Entrada/Resta)">Parcial (Entrada R$ / Resta R$)</option>
+                </select>
+
+                <label>Detalhes do Pagamento (Ex: Entrada R$ 100 no Pix / Falta R$ 100 na entrega)</label>
+                <input type="text" id="paymentDetails" placeholder="Ex: Entrada R$ 100 no Pix / Falta R$ 100 na entrega">
+
+                <label>Valor Cobrado Total (R$)</label>
+                <input type="number" step="0.01" id="servicePrice" placeholder="Ex: 220.00" required>
+                <label>Valor efetivamente recebido (R$)</label>
+                <input type="number" min="0" step="0.01" id="amountReceived" placeholder="Ex: 100.00; deixe vazio quando estiver aguardando">
+
+                <label>Fotos de Entrada</label>
+                <input type="file" id="devicePhotos" accept="image/*" multiple onchange="previewImages(event)">
+                <div id="previewContainer" class="preview-container"></div>
+
+                <label>Assinatura Digital do Cliente</label>
+                <canvas id="signatureCanvas"></canvas>
+                <button type="button" class="btn-clear" onclick="limparAssinatura()">Limpar Assinatura</button>
+
+                <div class="legal-disclaimer">
+                    ⚠️ O cliente concorda com el checklist e declara estar ciente do prazo máximo de 90 dias para retirada.
+                </div>
+
+                <p id="saveError" class="error-text" role="alert"></p>
+                <button type="submit" class="btn-dark-full" id="btnSaveOS">Salvar Ordem de Serviço</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE ORÇAMENTO DETALHADO -->
+    <div id="orcamentoModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="color:#fff;">Enviar Orçamento Detalhado</h3>
+                <button class="btn-close" onclick="fecharModalOrcamento()">✕</button>
+            </div>
+            <input type="hidden" id="orcamentoOSId">
+            <input type="hidden" id="orcamentoPhone">
+            <input type="hidden" id="orcamentoModelo">
+
+            <label>Tipo de Serviço / Reparo</label>
+            <input type="text" id="orcamentoServiceType" placeholder="Ex: Troca de Bateria / Reparo de Conector / Troca de Tela">
+
+            <label>Opção 1 / Detalhes do Serviço</label>
+            <input type="text" id="screenOpt1" placeholder="Ex: Bateria Original Gold - R$ 180,00 (Garantia 90 dias)">
+
+            <label>Opção 2 (Opcional)</label>
+            <input type="text" id="screenOpt2" placeholder="Ex: Bateria Primeira Linha - R$ 130,00 (Garantia 90 dias)">
+
+            <label>Opção 3 (Opcional)</label>
+            <input type="text" id="screenOpt3" placeholder="Ex: Outra opção de peça/marca...">
+
+            <button type="button" class="btn-dark-full" onclick="enviarWaOrcamentoOpcoes()">📲 Disparar Orçamento via WhatsApp</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE ESTOQUE E TABELA DE PREÇOS -->
+    <div id="stockModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="color:#fff;">Estoque & Consulta de Peças</h3>
+                <button class="btn-close" onclick="fecharModalEstoque()">✕</button>
+            </div>
+            <form id="stockForm" onsubmit="salvarPecaEstoque(event)">
+                <label>Nome da Peça / Modelo</label>
+                <input type="text" id="stockName" placeholder="Ex: Tela Incell iPhone 11" required>
+
+                <label>Fornecedor</label>
+                <select id="stockFormSupplier" required>
+                    <option value="Maycon">Maycon</option>
+                    <option value="Than">Than</option>
+                    <option value="Agui">Agui</option>
+                    <option value="Suzy">Suzy</option>
+                    <option value="Outro">Outro</option>
+                </select>
+
+                <label>Quantidade em Estoque</label>
+                <input type="number" id="stockQty" placeholder="Ex: 5" required>
+
+                <label>Custo Unitário (R$)</label>
+                <input type="number" step="0.01" id="stockCost" placeholder="Ex: 120.00" required>
+
+                <button type="submit" class="btn-dark" style="margin-bottom: 15px;">Adicionar ao Estoque</button>
+            </form>
+
+            <h4 style="color:#38bdf8; margin-bottom: 10px;">Histórico & Peças Salvas</h4>
+            <div id="stockList"></div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RELATÓRIOS -->
+    <div id="reportModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="color:#fff;">Relatório & Métricas</h3>
+                <button class="btn-close" onclick="fecharModalRelatorio()">✕</button>
+            </div>
+            
+            <div class="report-box">
+                <p style="font-size: 12px; color: #cbd5e1;">Recebido menos custo de peças (todas as OS):</p>
+                <strong style="font-size: 22px; color: #4ade80;" id="reportMonthLucro">R$ 0,00</strong>
+            </div>
+
+            <div class="report-box">
+                <p style="font-size: 12px; color: #cbd5e1;">Modelo Mais Atendido:</p>
+                <strong style="font-size: 16px; color: #38bdf8;" id="reportTopModel">-</strong>
+            </div>
+
+            <div class="report-box">
+                <p style="font-size: 12px; color: #cbd5e1;">Ticket Médio por OS:</p>
+                <strong style="font-size: 16px; color: #eab308;" id="reportTicketAvg">R$ 0,00</strong>
+            </div>
+        </div>
+    </div>
+
+    <div id="backupModal" class="modal-overlay" style="display:none">
+        <div class="modal-card">
+            <div class="modal-header"><h3>Backup e restauração</h3><button class="btn-close" onclick="fecharModalBackup()">✕</button></div>
+            <p style="color:#cbd5e1;margin:14px 0">O arquivo contém dados dos clientes, fotos e assinaturas. Guarde em local privado.</p>
+            <button type="button" class="btn-dark-full" onclick="exportarBackup()">⬇️ Baixar backup completo</button>
+            <label style="margin-top:22px">Restaurar OS e peças ausentes de um backup</label>
+            <input type="file" id="backupFile" accept=".json,application/json">
+            <button type="button" class="btn-stock-action" style="width:100%;padding:14px" onclick="restaurarBackup()">⬆️ Conferir e restaurar</button>
+            <p id="backupResult" role="status" style="margin:12px 0;color:#cbd5e1"></p>
+        </div>
+    </div>
+
+    <div id="servicesModal" class="modal-overlay" style="display:none">
+        <div class="modal-card">
+            <div class="modal-header"><h3>🛠️ Serviços avulsos</h3><button class="btn-close" onclick="fecharModalServicos()">✕</button></div>
+            <p style="color:#cbd5e1;margin:12px 0">Registre serviços sem troca de peça. Eles não entram na OS nem dão baixa no estoque.</p>
+            <div class="financial-grid">
+                <div class="fin-card"><span class="fin-value fin-bruto" id="serviceCount">0</span><span class="metric-label">Serviços feitos</span></div>
+                <div class="fin-card"><span class="fin-value fin-lucro" id="serviceTotal">R$ 0</span><span class="metric-label">Valor cobrado</span></div>
+                <div class="fin-card"><span class="fin-value fin-lucro" id="serviceReceived">R$ 0</span><span class="metric-label">Valor recebido</span></div>
+            </div>
+            <form id="serviceForm" onsubmit="salvarServicoAvulso(event)">
+                <input type="hidden" id="serviceEditId">
+                <label>Tipo de serviço</label><select id="serviceKind" required></select>
+                <label>Outro tipo (se selecionou Outro)</label><input type="text" id="serviceOther" placeholder="Ex: configuração de aplicativo">
+                <label>Data</label><input type="date" id="serviceDate" required>
+                <label>Valor cobrado (R$)</label><input type="number" id="serviceValue" min="0" step="0.01" required>
+                <label>Pagamento</label><select id="servicePayment"><option value="Pago">Pago</option><option value="Aguardando">Aguardando</option></select>
+                <label>Observação (opcional)</label><input type="text" id="serviceNote" placeholder="Anotação para a oficina">
+                <p id="serviceError" class="error-text" role="alert"></p>
+                <button type="submit" class="btn-dark-full" id="serviceSaveButton">Salvar serviço</button>
+            </form>
+            <h4 style="margin:20px 0 8px">Resumo por tipo</h4><div id="serviceSummary"></div>
+            <h4 style="margin:20px 0 8px">Registros</h4><div id="serviceList"></div>
+        </div>
+    </div>
+
+    <!-- ÁREA DE IMPRESSÃO -->
+    <div id="printSection"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>
