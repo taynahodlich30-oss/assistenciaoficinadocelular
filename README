@@ -1,19 +1,21 @@
-# 📱 Oficina do Celular - Painel do Lojista
+# Oficina do Celular - Painel da Oficina
 
 Aplicativo interno para gerenciamento de ordens de serviço, check-in de aparelhos e envio de orçamentos e avisos via WhatsApp.
 
-## 🚀 Funcionalidades
+## Funcionalidades
 
-* 🔐 **Acesso Restrito:** Autenticação simples por senha para uso exclusivo da loja.
-* 📸 **Registro de Entrada:** Upload e visualização rápida das fotos do aparelho no recebimento.
-* 💬 **Orçamento via WhatsApp:** Geração automática da mensagem de orçamento com envio direto para o cliente.
-* 🔔 **Aviso de Aparelho Pronto:** Notificação em um clique para informar a conclusão do serviço e o valor final.
+* **Acesso restrito:** Login com e-mail e senha pelo Firebase Authentication.
+* **Registro de entrada:** Fotos do aparelho no recebimento, checklist e assinatura.
+* **Orçamento via WhatsApp:** Mensagem pronta para enviar ao cliente.
+* **Aparelho pronto:** Aviso em um clique com valor e opção de avaliação.
+* **Estoque, relatórios e garantia:** Acompanhe serviços e pagamentos na mesma bancada.
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias utilizadas
 
 * HTML5
 * CSS3
 * JavaScript (ES6+)
+* Firebase Authentication e Firestore
 
 ---
 *Desenvolvido para a Oficina do Celular.*

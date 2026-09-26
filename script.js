@@ -274,10 +274,10 @@ function renderizarEstoque() {
         div.className = 'stock-item';
         div.innerHTML = `
             <div>
-                <strong style="color:#38bdf8">${item.nome}</strong><br>
-                <small style="color:#cbd5e1">Fornecedor: <b style="color:#a855f7;">${item.fornecedor || 'Não especificado'}</b> | Qtd: ${item.qtd} un | R$ ${item.custo.toFixed(2)}</small>
+                <strong class="stock-name">${item.nome}</strong><br>
+                <small>Fornecedor: <b class="stock-supplier">${item.fornecedor || 'Não especificado'}</b> | Qtd: ${item.qtd} un | R$ ${item.custo.toFixed(2)}</small>
             </div>
-            ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#alert"></use></svg> Baixo</span>' : ''}
+            ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#alert"></use></svg> Baixo</span>' : ''}
         `;
         list.appendChild(div);
     });
@@ -495,15 +495,15 @@ function atualizarPainel() {
             fotosHTML += '</div>';
         }
 
-        let corPagamento = "#eab308";
-        if (os.statusPagamento === "Pago") corPagamento = "#4ade80";
-        if (os.statusPagamento === "Parcial (Entrada/Resta)") corPagamento = "#38bdf8";
+        let classePagamento = 'payment-pending';
+        if (os.statusPagamento === "Pago") classePagamento = 'payment-paid';
+        if (os.statusPagamento === "Parcial (Entrada/Resta)") classePagamento = 'payment-partial';
 
         const card = document.createElement('div');
         card.className = 'os-card';
         card.innerHTML = `
             <div class="os-card-header">
-                <strong>${os.idOS} - ${os.cliente}</strong>
+                <div class="os-identity"><span class="os-code">${os.idOS}</span><strong>${os.cliente}</strong></div>
                 <select class="status-select" onchange="alterarStatusOS('${os.idOS}', this.value)">
                     <option value="Em análise" ${os.status === 'Em análise' ? 'selected' : ''}>Em análise</option>
                     <option value="Em orçamento" ${os.status === 'Em orçamento' ? 'selected' : ''}>Em orçamento</option>
@@ -511,25 +511,25 @@ function atualizarPainel() {
                     <option value="Pronto" ${os.status === 'Pronto' ? 'selected' : ''}>Pronto</option>
                 </select>
             </div>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#phone"></use></svg> <strong>Aparelho:</strong> ${os.modelo} (IMEI: ${os.imei})</p>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#tool"></use></svg> <strong>Defeito Relatado:</strong> ${os.defeito}</p>
-            <p style="color: #4ade80;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#tool"></use></svg> <strong>Componentes Trocados:</strong> ${os.pecasTrocadas || 'Nenhum registrado'}</p>
-            <p style="color: #cbd5e1; font-size: 12px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#clipboard"></use></svg> <strong>Descrição:</strong> ${os.descricaoServico || 'Sem detalhes'}</p>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#tag"></use></svg> <strong>Fornecedor Peça:</strong> <strong style="color: #a855f7;">${os.fornecedorPeca || 'Não Informado'}</strong></p>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#wallet"></use></svg> <strong>Pagamento:</strong> <span style="color:${corPagamento}; font-weight:bold;">${os.statusPagamento || 'Aguardando'}</span> — recebido R$ ${valorEfetivamenteRecebido(os).toFixed(2)} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#wallet"></use></svg> <strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#phone"></use></svg> <strong>Aparelho:</strong> ${os.modelo} (IMEI: ${os.imei})</p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tool"></use></svg> <strong>Defeito Relatado:</strong> ${os.defeito}</p>
+            <p class="os-repair"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tool"></use></svg> <strong>Componentes Trocados:</strong> ${os.pecasTrocadas || 'Nenhum registrado'}</p>
+            <p class="os-secondary"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#clipboard"></use></svg> <strong>Descrição:</strong> ${os.descricaoServico || 'Sem detalhes'}</p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tag"></use></svg> <strong>Fornecedor Peça:</strong> <strong class="os-supplier">${os.fornecedorPeca || 'Não Informado'}</strong></p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#wallet"></use></svg> <strong>Pagamento:</strong> <span class="payment-badge ${classePagamento}">${os.statusPagamento || 'Aguardando'}</span> — recebido R$ ${valorEfetivamenteRecebido(os).toFixed(2)} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#wallet"></use></svg> <strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
             ${fotosHTML}
             <div class="os-card-actions">
-                <button class="btn-sm btn-wa-orcamento" onclick="abrirModalOrcamentoOpcoes('${os.idOS}', '${os.whatsapp}', '${os.modelo}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#clock"></use></svg> Orçamento</button>
-                <button class="btn-sm btn-wa-aprovado" onclick="waNotificarAprovado('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#check"></use></svg> Aprovado</button>
-                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#check"></use></svg> Pronto</button>
-                <button class="btn-sm btn-wa-comprovante" onclick="waEnviarComprovante('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#send"></use></svg> Via Zap</button>
+                <button class="btn-sm btn-wa-orcamento" onclick="abrirModalOrcamentoOpcoes('${os.idOS}', '${os.whatsapp}', '${os.modelo}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#clock"></use></svg> Orçamento</button>
+                <button class="btn-sm btn-wa-aprovado" onclick="waNotificarAprovado('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#check"></use></svg> Aprovado</button>
+                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#check"></use></svg> Pronto</button>
+                <button class="btn-sm btn-wa-comprovante" onclick="waEnviarComprovante('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#send"></use></svg> Via Zap</button>
             </div>
             <div class="os-card-subactions">
-                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#print"></use></svg> OS Papel</button>
-                <button class="btn-sm" style="background:#a855f7;" onclick="imprimirEtiqueta('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#tag"></use></svg> Etiqueta</button>
-                <button class="btn-sm btn-edit" onclick="editarOS('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#edit"></use></svg> Editar</button>
-                <button class="btn-sm btn-delete" onclick="excluirOS('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#trash"></use></svg> Excluir</button>
+                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#print"></use></svg> OS Papel</button>
+                <button class="btn-sm" onclick="imprimirEtiqueta('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tag"></use></svg> Etiqueta</button>
+                <button class="btn-sm btn-edit" onclick="editarOS('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#edit"></use></svg> Editar</button>
+                <button class="btn-sm btn-delete" onclick="excluirOS('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#trash"></use></svg> Excluir</button>
             </div>
         `;
         osList.appendChild(card);
@@ -558,12 +558,12 @@ function enviarWaOrcamentoOpcoes() {
     const opt2 = document.getElementById('screenOpt2').value;
     const opt3 = document.getElementById('screenOpt3').value;
 
-    let texto = `*📱 OFICINA DO CELULAR - ORÇAMENTO DE SERVIÇO*\n\n`;
+    let texto = `*OFICINA DO CELULAR - ORÇAMENTO DE SERVIÇO*\n\n`;
     texto += `Olá! Segue o orçamento para o seu *${modelo}* (${osId}):\n\n`;
-    texto += `🔧 *Serviço Avaliado:* ${serviceType}\n\n`;
-    if (opt1) texto += `🔹 *Opção 1:* ${opt1}\n`;
-    if (opt2) texto += `🔹 *Opção 2:* ${opt2}\n`;
-    if (opt3) texto += `🔹 *Opção 3:* ${opt3}\n`;
+    texto += `*Serviço avaliado:* ${serviceType}\n\n`;
+    if (opt1) texto += `*Opção 1:* ${opt1}\n`;
+    if (opt2) texto += `*Opção 2:* ${opt2}\n`;
+    if (opt3) texto += `*Opção 3:* ${opt3}\n`;
     texto += `\nQual das opções podemos aprovar para darmos início ao serviço?`;
 
     alterarStatusOS(osId, 'Em orçamento');
@@ -579,10 +579,10 @@ function waNotificarAprovado(osId) {
     const num = os.whatsapp.replace(/\D/g, '');
     alterarStatusOS(osId, 'Em reparo');
 
-    let texto = `*📱 OFICINA DO CELULAR - SERVIÇO APROVADO*\n\n`;
+    let texto = `*OFICINA DO CELULAR - SERVIÇO APROVADO*\n\n`;
     texto += `Prezado(a) *${os.cliente}*,\n`;
     texto += `Confirmamos a aprovação do orçamento para o seu aparelho *${os.modelo}* (${os.idOS}).\n\n`;
-    texto += `⚙️ Nossos técnicos já iniciaram a manutenção do seu dispositivo. Assim que o serviço for concluído e passar nos testes de qualidade, entraremos em contato para a retirada.\n\n`;
+    texto += `Nossos técnicos já iniciaram a manutenção do seu dispositivo. Assim que o serviço for concluído e passar nos testes de qualidade, entraremos em contato para a retirada.\n\n`;
     texto += `Agradecemos a confiança!`;
 
     window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
@@ -630,28 +630,28 @@ async function waEnviarComprovante(osId) {
     linkGarantia.searchParams.set('codigo', os.garantiaToken);
     const qrCodeGarantia = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(linkGarantia.href)}`;
 
-    let statusPagamentoTexto = "🟡 AGUARDANDO PAGAMENTO";
+    let statusPagamentoTexto = "AGUARDANDO PAGAMENTO";
     if (os.statusPagamento === "Pago") {
-        statusPagamentoTexto = `🟢 PAGO (R$ ${os.valor.toFixed(2)})`;
+        statusPagamentoTexto = `PAGO (R$ ${os.valor.toFixed(2)})`;
     } else if (os.statusPagamento === "Parcial (Entrada/Resta)") {
-        statusPagamentoTexto = `🔵 PARCIAL ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}`;
+        statusPagamentoTexto = `PARCIAL ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}`;
     }
 
-    let texto = `*📱 OFICINA DO CELULAR - COMPROVANTE DE ENTREGA & GARANTIA*\n\n`;
+    let texto = `*OFICINA DO CELULAR - COMPROVANTE DE ENTREGA E GARANTIA*\n\n`;
     texto += `Prezado(a) *${os.cliente}*,\n`;
     texto += `Seu aparelho foi entregue com sucesso! Seguem os detalhes do serviço realizado:\n\n`;
-    texto += `📄 *Ordem de Serviço:* ${os.idOS}\n`;
-    texto += `📱 *Aparelho:* ${os.modelo}\n`;
-    texto += `🔧 *Defeito Relatado:* ${os.defeito}\n`;
-    texto += `⚙️ *Componente(s) Trocado(s):* ${os.pecasTrocadas || 'Reparo Efetuado'}\n`;
-    texto += `💰 *Valor Total:* R$ ${os.valor.toFixed(2)}\n`;
-    texto += `💳 *Status do Pagamento:* ${statusPagamentoTexto}\n\n`;
+    texto += `*Ordem de serviço:* ${os.idOS}\n`;
+    texto += `*Aparelho:* ${os.modelo}\n`;
+    texto += `*Defeito relatado:* ${os.defeito}\n`;
+    texto += `*Componentes trocados:* ${os.pecasTrocadas || 'Reparo Efetuado'}\n`;
+    texto += `*Valor total:* R$ ${os.valor.toFixed(2)}\n`;
+    texto += `*Status do pagamento:* ${statusPagamentoTexto}\n\n`;
     texto += `------------------------------------\n`;
-    texto += `🛡️ *TERMO DE GARANTIA DIGITAL (90 DIAS)*\n`;
+    texto += `*TERMO DE GARANTIA DIGITAL (90 DIAS)*\n`;
     texto += `Este comprovante assegura garantia de 90 dias a contar desta data para os componentes substituídos.\n`;
-    texto += `⚠️ *A garantia não cobre:* Quedas, quebras, marcas de impacto, selos rompidos ou contato com líquidos.\n\n`;
-    texto += `🔎 *Consulte a validade da garantia:* ${linkGarantia.href}\n`;
-    texto += `📲 *QR Code da garantia:* ${qrCodeGarantia}\n\n`;
+    texto += `*A garantia não cobre:* Quedas, quebras, marcas de impacto, selos rompidos ou contato com líquidos.\n\n`;
+    texto += `*Consulte a validade da garantia:* ${linkGarantia.href}\n`;
+    texto += `*QR Code da garantia:* ${qrCodeGarantia}\n\n`;
     texto += `Agradecemos a preferência! Caso precise, estamos à disposição.`;
 
     janela.location.href = `https://wa.me/55${num}?text=${encodeURIComponent(texto)}`;
@@ -662,7 +662,7 @@ function waPronto(telefone, osId, modelo, valor) {
     const linkAvaliacao = "https://share.google/fCGo2AkH2HVhHMzSP";
     
     const msg = encodeURIComponent(
-        `Olá! Excelente notícia 🎉! O seu *${modelo}* (${osId}) já está pronto para retirada. Valor: *R$ ${parseFloat(valor).toFixed(2)}*. Aguardamos você!\n\n` +
+        `Olá! Seu *${modelo}* (${osId}) já está pronto para retirada. Valor: *R$ ${parseFloat(valor).toFixed(2)}*. Aguardamos você!\n\n` +
         `Se puder dedicar 1 minutinho para avaliar o nosso atendimento no Google, nos ajuda muito: ${linkAvaliacao}`
     );
     
@@ -948,7 +948,7 @@ function imprimirCupom(osId) {
     const printSection = document.getElementById('printSection');
     printSection.innerHTML = `
         <div style="font-family: Arial, sans-serif; width: 100%; max-width: 300px; margin: 0 auto; color: #000;">
-            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#phone"></use></svg> OFICINA DO CELULAR</h2>
+            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#phone"></use></svg> OFICINA DO CELULAR</h2>
             <p style="text-align: center; margin: 2px 0; font-size: 12px;">ORDEM DE SERVIÇO</p>
             <p style="text-align: center; font-size: 11px; margin-bottom: 5px;">Data: ${os.data}</p>
             <hr style="border-top: 1px dashed #000; margin: 5px 0;">
