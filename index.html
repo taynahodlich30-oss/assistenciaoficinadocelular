@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oficina do Celular - Sistema Completo</title>
-    <link rel="manifest" href="manifest.json?v=3">
+    <link rel="manifest" href="manifest.json?v=4">
     <meta name="theme-color" content="#0e1918">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -146,38 +146,37 @@
             #printSection { display: block !important; position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 5px; }
         }
     </style>
-    <link rel="stylesheet" href="redesign.css?v=3">
+    <link rel="stylesheet" href="redesign.css?v=4">
 </head>
 <body>
 
     <div id="loginScreen" class="login-container">
         <div class="login-card">
             <span class="login-eyebrow"><span class="live-dot"></span> ACESSO À OFICINA</span>
-            <div class="header-title"><span class="brand-glyph"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#phone"></use></svg></span><span>Oficina do Celular</span></div>
+            <div class="header-title"><span class="brand-glyph"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#phone"></use></svg></span><span>Oficina do Celular</span></div>
             <p>Acesse sua bancada de onde estiver. Sua rotina, mais organizada.</p>
-            <input type="email" id="emailInput" autocomplete="username" placeholder="E-mail de acesso">
-            <input type="password" id="passwordInput" autocomplete="current-password" placeholder="Sua senha de acesso" onkeydown="if(event.key==='Enter') validarSenha()">
+            <label for="emailInput">E-mail de acesso</label><input type="email" id="emailInput" autocomplete="username" placeholder="seu@email.com">
+            <label for="passwordInput">Senha</label><div class="password-field"><input type="password" id="passwordInput" autocomplete="current-password" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter') validarSenha()"><button type="button" id="passwordToggle" aria-label="Mostrar senha" aria-pressed="false" onclick="alternarVisibilidadeSenha()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#eye"></use></svg></button></div>
             <button class="btn-dark" id="loginButton" onclick="validarSenha()">Entrar no sistema</button>
             <p id="loginError" class="error-text"></p>
-            <div class="login-footnote"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#shield"></use></svg> Área reservada à equipe da oficina</div>
+            <div class="login-footnote"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#shield"></use></svg> Área reservada à equipe da oficina</div>
         </div>
     </div>
 
     <div id="appScreen" class="app-container" style="display: none;">
       <div class="dashboard-shell">
         <aside class="sidebar" aria-label="Navegação principal">
-          <div class="sidebar-brand"><span class="brand-glyph"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#phone"></use></svg></span><div><strong>Oficina do Celular</strong><small>CONTROLE DA BANCADA</small></div></div>
+          <div class="sidebar-brand"><span class="brand-glyph"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#phone"></use></svg></span><div><strong>Oficina do Celular</strong><small>CONTROLE DA BANCADA</small></div></div>
           <div class="sidebar-caption">MENU PRINCIPAL</div>
           <nav class="side-nav">
-            <button type="button" class="active" onclick="document.getElementById('overviewSection').scrollIntoView({behavior:'smooth'})"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#chart"></use></svg> Visão geral</button>
-            <button type="button" onclick="document.getElementById('ordersSection').scrollIntoView({behavior:'smooth'})"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#clipboard"></use></svg> Ordens de serviço</button>
-            <button type="button" onclick="abrirModalOS()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#plus"></use></svg> Nova ordem</button>
-            <button type="button" onclick="abrirModalEstoque()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#package"></use></svg> Estoque e peças</button>
-            <button type="button" onclick="abrirModalServicos()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tool"></use></svg> Serviços avulsos</button>
-            <button type="button" onclick="abrirModalRelatorio()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#trend"></use></svg> Relatórios</button>
+            <button type="button" class="active" onclick="document.getElementById('overviewSection').scrollIntoView({behavior:'smooth'})"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#chart"></use></svg> Visão geral</button>
+            <button type="button" onclick="document.getElementById('ordersSection').scrollIntoView({behavior:'smooth'})"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#clipboard"></use></svg> Ordens de serviço</button>
+            <button type="button" onclick="abrirModalOS()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#plus"></use></svg> Nova ordem</button>
+            <button type="button" onclick="abrirModalEstoque()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#package"></use></svg> Estoque e peças</button>
+            <button type="button" onclick="abrirModalServicos()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#tool"></use></svg> Serviços avulsos</button>
+            <button type="button" onclick="abrirModalRelatorio()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#trend"></use></svg> Relatórios</button>
+            <button type="button" onclick="abrirModalBackup()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#download"></use></svg> Backup</button>
           </nav>
-          <div class="sidebar-caption">SISTEMA</div>
-          <nav class="side-nav side-nav-secondary"><button type="button" onclick="abrirModalBackup()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#download"></use></svg> Backup</button></nav>
           <div class="sidebar-foot"><span class="foot-dot"></span> Seus dados organizados em um só lugar.</div>
         </aside>
         <div class="dashboard-main">
@@ -187,44 +186,30 @@
                 <h1>Painel da oficina</h1>
                 <p class="header-subtitle">Acompanhe serviços, recebimentos e peças em um só lugar.</p>
             </div>
-            <button class="btn-logout" onclick="logout()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#logout"></use></svg> <span>Sair</span></button>
+            <button class="btn-logout" onclick="logout()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#logout"></use></svg> <span>Sair</span></button>
         </header>
 
         <main class="content">
             <div id="appNotice" class="app-notice" role="status" aria-live="polite" style="display:none"></div>
             <section class="hero-panel" id="overviewSection">
-              <div class="hero-copy"><span class="hero-eyebrow"><span class="live-dot"></span> SUA BANCADA EM ORDEM</span><h2>Controle tudo.<br><em>Atenda melhor.</em></h2><p>Do primeiro contato à entrega, tenha uma visão clara de cada aparelho que passa pela sua oficina.</p><button type="button" class="hero-cta" onclick="abrirModalOS()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#plus"></use></svg> Criar nova ordem</button></div>
-              <div class="hero-visual" aria-hidden="true"><div class="phone-case"><div class="phone-camera"></div><div class="phone-screen"><div class="phone-screen-logo"><svg class="ui-icon"><use href="icons.svg?v=3#tool"></use></svg></div><div class="phone-screen-row"></div><div class="phone-screen-row short"></div><div class="phone-screen-pill"></div></div></div><div class="floating-chip chip-one"><svg class="ui-icon"><use href="icons.svg?v=3#check"></use></svg> Serviço concluído</div><div class="floating-chip chip-two"><svg class="ui-icon"><use href="icons.svg?v=3#clipboard"></use></svg> Ordem organizada</div></div>
+              <div class="hero-copy"><span class="hero-eyebrow"><span class="live-dot"></span> PRONTO PARA ATENDER</span><h2>Uma bancada mais <em>simples.</em></h2><p>Registre um aparelho ou acompanhe os serviços em andamento.</p><button type="button" class="hero-cta" onclick="abrirModalOS()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#plus"></use></svg> Nova ordem de serviço</button></div>
+              <div class="hero-visual" aria-hidden="true"><div class="phone-case"><div class="phone-camera"></div><div class="phone-screen"><div class="phone-screen-logo"><svg class="ui-icon"><use href="icons.svg?v=4#tool"></use></svg></div><div class="phone-screen-row"></div><div class="phone-screen-row short"></div><div class="phone-screen-pill"></div></div></div><div class="floating-chip chip-one"><svg class="ui-icon"><use href="icons.svg?v=4#check"></use></svg> Serviço concluído</div><div class="floating-chip chip-two"><svg class="ui-icon"><use href="icons.svg?v=4#clipboard"></use></svg> Ordem organizada</div></div>
             </section>
-            <div class="dashboard-section-title"><div><div class="section-kicker">VISÃO GERAL</div><h2>Resumo da oficina</h2></div><span>Toque em um status para filtrar as ordens</span></div>
+            <div class="dashboard-section-title"><div><div class="section-kicker">VISÃO GERAL</div><h2>Resumo da oficina</h2></div><span>Selecione um status para ver as ordens</span></div>
             <section class="metrics-grid">
-                <div class="metric-card" role="button" tabindex="0" onclick="filtrarPorStatus('Todos')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Todos')}" id="cardFilterTodos"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#clipboard"></use></svg></span><span class="metric-number">01 / 05</span></span><span class="metric-value" id="countTotal">0</span><span class="metric-label">Todas as OS</span></div>
-                <div class="metric-card" role="button" tabindex="0" onclick="filtrarPorStatus('Em análise')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Em análise')}" id="cardFilterAnalise"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#search"></use></svg></span><span class="metric-number">02 / 05</span></span><span class="metric-value" id="countAnalise">0</span><span class="metric-label">Em análise</span></div>
-                <div class="metric-card" role="button" tabindex="0" onclick="filtrarPorStatus('Em orçamento')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Em orçamento')}" id="cardFilterOrcamento"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#clock"></use></svg></span><span class="metric-number">03 / 05</span></span><span class="metric-value" id="countOrcamento">0</span><span class="metric-label">Em orçamento</span></div>
-                <div class="metric-card" role="button" tabindex="0" onclick="filtrarPorStatus('Em reparo')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Em reparo')}" id="cardFilterReparo"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tool"></use></svg></span><span class="metric-number">04 / 05</span></span><span class="metric-value" id="countReparo">0</span><span class="metric-label">Em reparo</span></div>
-                <div class="metric-card" role="button" tabindex="0" onclick="filtrarPorStatus('Pronto')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Pronto')}" id="cardFilterProntos"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#check"></use></svg></span><span class="metric-number">05 / 05</span></span><span class="metric-value" id="countProntos">0</span><span class="metric-label">Prontos</span></div>
+                <div class="metric-card active" role="button" aria-pressed="true" tabindex="0" onclick="filtrarPorStatus('Todos')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Todos')}" id="cardFilterTodos"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#clipboard"></use></svg></span><span class="metric-number">01 / 05</span></span><span class="metric-value" id="countTotal">0</span><span class="metric-label">Todas as OS</span></div>
+                <div class="metric-card" role="button" aria-pressed="false" tabindex="0" onclick="filtrarPorStatus('Em análise')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Em análise')}" id="cardFilterAnalise"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#search"></use></svg></span><span class="metric-number">02 / 05</span></span><span class="metric-value" id="countAnalise">0</span><span class="metric-label">Em análise</span></div>
+                <div class="metric-card" role="button" aria-pressed="false" tabindex="0" onclick="filtrarPorStatus('Em orçamento')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Em orçamento')}" id="cardFilterOrcamento"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#clock"></use></svg></span><span class="metric-number">03 / 05</span></span><span class="metric-value" id="countOrcamento">0</span><span class="metric-label">Em orçamento</span></div>
+                <div class="metric-card" role="button" aria-pressed="false" tabindex="0" onclick="filtrarPorStatus('Em reparo')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Em reparo')}" id="cardFilterReparo"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#tool"></use></svg></span><span class="metric-number">04 / 05</span></span><span class="metric-value" id="countReparo">0</span><span class="metric-label">Em reparo</span></div>
+                <div class="metric-card" role="button" aria-pressed="false" tabindex="0" onclick="filtrarPorStatus('Pronto')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Pronto')}" id="cardFilterProntos"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#check"></use></svg></span><span class="metric-number">05 / 05</span></span><span class="metric-value" id="countProntos">0</span><span class="metric-label">Prontos</span></div>
             </section>
-
-            <section class="financial-grid">
-                <div class="fin-card"><span class="fin-value fin-bruto" id="totalBruto">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#receipt"></use></svg> Total cobrado</span></div>
-                <div class="fin-card"><span class="fin-value fin-lucro" id="totalRecebido">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#wallet"></use></svg> Total recebido</span></div>
-                <div class="fin-card"><span class="fin-value fin-custo" id="totalCusto">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#package"></use></svg> Custo de peças</span></div>
-                <div class="fin-card"><span class="fin-value fin-lucro" id="totalLucro">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#trend"></use></svg> Recebido menos peças</span></div>
-            </section>
-
-            <div class="section-kicker">ACESSO RÁPIDO</div>
-            <div class="action-bar">
-                <button class="btn-main-action" onclick="abrirModalOS()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#plus"></use></svg></span><span>Nova OS</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=3#arrow"></use></svg></button>
-                <button class="btn-stock-action" onclick="abrirModalEstoque()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#package"></use></svg></span><span>Peças e preços</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=3#arrow"></use></svg></button>
-                <button class="btn-report-action" onclick="abrirModalRelatorio()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#chart"></use></svg></span><span>Relatórios</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=3#arrow"></use></svg></button>
-                <button class="btn-report-action" onclick="abrirModalServicos()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tool"></use></svg></span><span>Serviços avulsos</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=3#arrow"></use></svg></button>
-                <button class="btn-stock-action" onclick="abrirModalBackup()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#download"></use></svg></span><span>Backup</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=3#arrow"></use></svg></button>
-            </div>
 
             <div id="ordersSection" class="list-heading"><div><div class="section-kicker">ATENDIMENTOS</div><h2>Ordens de serviço</h2></div><p>Encontre e acompanhe os aparelhos da oficina.</p></div>
             <div class="search-container">
-                <input type="search" id="searchInput" placeholder="Busque por cliente, aparelho, telefone, IMEI ou OS" oninput="buscarOS()">
+                <label class="search-label" for="searchInput">Encontre uma ordem rapidamente</label>
+                <div class="search-field"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#search"></use></svg><input type="search" id="searchInput" placeholder="Cliente, aparelho, telefone ou número da OS" oninput="buscarOS()" autocomplete="off"></div>
                 <div class="filter-grid">
+                    <select id="statusFilter" onchange="filtrarPorStatus(this.value, false)" aria-label="Filtrar etapa do serviço"><option value="Todos">Todas as etapas</option><option value="Em análise">Em análise</option><option value="Em orçamento">Em orçamento</option><option value="Em reparo">Em reparo</option><option value="Pronto">Prontos</option></select>
                     <select id="paymentFilter" onchange="buscarOS()" aria-label="Filtrar pagamento"><option value="Todos">Todos os pagamentos</option><option value="Pago">Pago</option><option value="Aguardando Pagamento">Aguardando pagamento</option><option value="Parcial (Entrada/Resta)">Parcial</option></select>
                     <input type="month" id="monthFilter" onchange="buscarOS()" aria-label="Filtrar mês da OS">
                     <button type="button" class="filter-clear" onclick="limparFiltros()">Limpar filtros</button>
@@ -234,10 +219,28 @@
 
             <div class="filter-status-title">
                 <span id="filterCurrentTitle">Exibindo: Todas as Ordens de Serviço</span>
-                <button class="filter-reset" onclick="filtrarPorStatus('Todos')">Limpar filtro</button>
             </div>
 
             <section id="osList" class="os-list"></section>
+
+            <div class="dashboard-section-title" id="toolsSection"><div><div class="section-kicker">SUA OFICINA</div><h2>Finanças e ferramentas</h2></div></div>
+            <section class="financial-grid">
+                <div class="fin-card"><span class="fin-value fin-bruto" id="totalBruto">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#receipt"></use></svg> Total cobrado</span></div>
+                <div class="fin-card"><span class="fin-value fin-lucro" id="totalRecebido">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#wallet"></use></svg> Total recebido</span></div>
+                <div class="fin-card"><span class="fin-value fin-custo" id="totalCusto">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#package"></use></svg> Custo de peças</span></div>
+                <div class="fin-card"><span class="fin-value fin-lucro" id="totalLucro">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#trend"></use></svg> Recebido menos peças</span></div>
+            </section>
+
+            <div class="section-kicker">ACESSO RÁPIDO</div>
+            <div class="action-bar">
+                <button class="btn-main-action" onclick="abrirModalOS()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#plus"></use></svg></span><span>Nova OS</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=4#arrow"></use></svg></button>
+                <button class="btn-stock-action" onclick="abrirModalEstoque()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#package"></use></svg></span><span>Peças e preços</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=4#arrow"></use></svg></button>
+                <button class="btn-report-action" onclick="abrirModalRelatorio()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#chart"></use></svg></span><span>Relatórios</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=4#arrow"></use></svg></button>
+                <button class="btn-report-action" onclick="abrirModalServicos()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#tool"></use></svg></span><span>Serviços avulsos</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=4#arrow"></use></svg></button>
+                <button class="btn-stock-action" onclick="abrirModalBackup()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#download"></use></svg></span><span>Backup</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=4#arrow"></use></svg></button>
+            </div>
+
+
         </main>
         </div>
       </div>
@@ -248,11 +251,13 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h3 style="color:#fff;" id="modalTitle">Criar Ordem de Serviço</h3>
-                <button class="btn-close" type="button" aria-label="Fechar ordem de serviço" onclick="fecharModalOS()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#close"></use></svg></button>
+                <button class="btn-close" type="button" aria-label="Fechar ordem de serviço" onclick="fecharModalOS()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#close"></use></svg></button>
             </div>
             <form id="osForm" onsubmit="salvarOS(event)">
                 <input type="hidden" id="editDocId">
                 <input type="hidden" id="editOSId">
+
+                <h4 class="form-section-title">Dados do atendimento</h4>
 
                 <label>WhatsApp / Telefone</label>
                 <input type="tel" id="clientPhone" placeholder="Ex: 11999998888" onblur="verificarHistoricoCliente()" required>
@@ -267,6 +272,7 @@
                 <label>IMEI / Série</label>
                 <input type="text" id="deviceIMEI" placeholder="Ex: 354128" required>
 
+                <h4 class="form-section-title">Condição do aparelho</h4>
                 <label>Check-list de Entrada</label>
                 <div class="checklist-grid">
                     <div class="checklist-item"><span>Tela / Touch</span><select id="checkTouch"><option value="OK">OK</option><option value="Defeito">Defeito</option><option value="N/T">N/T</option></select></div>
@@ -280,6 +286,7 @@
                 <label>Defeito Relatado pelo Cliente</label>
                 <input type="text" id="deviceDefect" placeholder="Ex: Não liga / Bateria descarregando rápido" required>
 
+                <h4 class="form-section-title">Reparo e peças</h4>
                 <div id="partsPanel">
                     <label>Componentes Trocados / Substituídos</label>
                     <div id="componentChoices" class="choice-grid"></div>
@@ -318,6 +325,7 @@
                 <label>Custo da Peça (R$)</label>
                 <input type="number" step="0.01" id="partCost" placeholder="Ex: 80.00">
 
+                <h4 class="form-section-title">Andamento e pagamento</h4>
                 <label>Status do Serviço</label>
                 <select id="serviceStatus" required>
                     <option value="Em análise">Em análise</option>
@@ -341,6 +349,7 @@
                 <label>Valor efetivamente recebido (R$)</label>
                 <input type="number" min="0" step="0.01" id="amountReceived" placeholder="Ex: 100.00; deixe vazio quando estiver aguardando">
 
+                <h4 class="form-section-title">Fotos e assinatura</h4>
                 <label>Fotos de Entrada</label>
                 <input type="file" id="devicePhotos" accept="image/*" multiple onchange="previewImages(event)">
                 <div id="previewContainer" class="preview-container"></div>
@@ -353,8 +362,7 @@
                     O cliente concorda com o checklist e declara estar ciente do prazo máximo de 90 dias para retirada.
                 </div>
 
-                <p id="saveError" class="error-text" role="alert"></p>
-                <button type="submit" class="btn-dark-full" id="btnSaveOS">Salvar Ordem de Serviço</button>
+                <div class="form-save-bar"><p id="saveError" class="error-text" role="alert"></p><button type="submit" class="btn-dark-full" id="btnSaveOS">Salvar Ordem de Serviço</button></div>
             </form>
         </div>
     </div>
@@ -364,7 +372,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h3 style="color:#fff;">Enviar Orçamento Detalhado</h3>
-                <button class="btn-close" type="button" aria-label="Fechar orçamento" onclick="fecharModalOrcamento()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#close"></use></svg></button>
+                <button class="btn-close" type="button" aria-label="Fechar orçamento" onclick="fecharModalOrcamento()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#close"></use></svg></button>
             </div>
             <input type="hidden" id="orcamentoOSId">
             <input type="hidden" id="orcamentoPhone">
@@ -382,7 +390,7 @@
             <label>Opção 3 (Opcional)</label>
             <input type="text" id="screenOpt3" placeholder="Ex: Outra opção de peça/marca...">
 
-            <button type="button" class="btn-dark-full" onclick="enviarWaOrcamentoOpcoes()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#send"></use></svg> Enviar orçamento no WhatsApp</button>
+            <button type="button" class="btn-dark-full" onclick="enviarWaOrcamentoOpcoes()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#send"></use></svg> Enviar orçamento no WhatsApp</button>
         </div>
     </div>
 
@@ -391,7 +399,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h3 style="color:#fff;">Estoque & Consulta de Peças</h3>
-                <button class="btn-close" type="button" aria-label="Fechar estoque" onclick="fecharModalEstoque()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#close"></use></svg></button>
+                <button class="btn-close" type="button" aria-label="Fechar estoque" onclick="fecharModalEstoque()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#close"></use></svg></button>
             </div>
             <form id="stockForm" onsubmit="salvarPecaEstoque(event)">
                 <label>Nome da Peça / Modelo</label>
@@ -425,7 +433,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h3 style="color:#fff;">Relatório & Métricas</h3>
-                <button class="btn-close" type="button" aria-label="Fechar relatórios" onclick="fecharModalRelatorio()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#close"></use></svg></button>
+                <button class="btn-close" type="button" aria-label="Fechar relatórios" onclick="fecharModalRelatorio()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#close"></use></svg></button>
             </div>
             
             <div class="report-box">
@@ -447,19 +455,19 @@
 
     <div id="backupModal" class="modal-overlay" style="display:none">
         <div class="modal-card">
-            <div class="modal-header"><h3>Backup e restauração</h3><button class="btn-close" type="button" aria-label="Fechar backup" onclick="fecharModalBackup()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#close"></use></svg></button></div>
+            <div class="modal-header"><h3>Backup e restauração</h3><button class="btn-close" type="button" aria-label="Fechar backup" onclick="fecharModalBackup()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#close"></use></svg></button></div>
             <p style="color:#cbd5e1;margin:14px 0">O arquivo contém dados dos clientes, fotos e assinaturas. Guarde em local privado.</p>
-            <button type="button" class="btn-dark-full" onclick="exportarBackup()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#download"></use></svg> Baixar backup completo</button>
+            <button type="button" class="btn-dark-full" onclick="exportarBackup()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#download"></use></svg> Baixar backup completo</button>
             <label style="margin-top:22px">Restaurar OS e peças ausentes de um backup</label>
             <input type="file" id="backupFile" accept=".json,application/json">
-            <button type="button" class="btn-stock-action" style="width:100%;padding:14px" onclick="restaurarBackup()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#upload"></use></svg> Conferir e restaurar</button>
+            <button type="button" class="btn-stock-action" style="width:100%;padding:14px" onclick="restaurarBackup()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#upload"></use></svg> Conferir e restaurar</button>
             <p id="backupResult" role="status" style="margin:12px 0;color:#cbd5e1"></p>
         </div>
     </div>
 
     <div id="servicesModal" class="modal-overlay" style="display:none">
         <div class="modal-card">
-            <div class="modal-header"><h3><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tool"></use></svg> Serviços avulsos</h3><button class="btn-close" type="button" aria-label="Fechar serviços" onclick="fecharModalServicos()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#close"></use></svg></button></div>
+            <div class="modal-header"><h3><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#tool"></use></svg> Serviços avulsos</h3><button class="btn-close" type="button" aria-label="Fechar serviços" onclick="fecharModalServicos()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#close"></use></svg></button></div>
             <p style="color:#cbd5e1;margin:12px 0">Registre serviços sem troca de peça. Eles não entram na OS nem dão baixa no estoque.</p>
             <div class="financial-grid">
                 <div class="fin-card"><span class="fin-value fin-bruto" id="serviceCount">0</span><span class="metric-label">Serviços feitos</span></div>
@@ -482,6 +490,10 @@
         </div>
     </div>
 
+    <div id="discardModal" class="modal-overlay" role="alertdialog" aria-modal="true" aria-labelledby="discardTitle" aria-describedby="discardDescription" style="display:none">
+        <div class="discard-card"><span class="discard-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#alert"></use></svg></span><h3 id="discardTitle">Descartar alterações?</h3><p id="discardDescription">Os dados desta ordem ainda não foram salvos.</p><div class="discard-actions"><button type="button" class="btn-dark" onclick="continuarEditandoOS()">Continuar editando</button><button type="button" class="discard-button" onclick="descartarFormularioOS()">Descartar alterações</button></div></div>
+    </div>
+
     <!-- ÁREA DE IMPRESSÃO -->
     <div id="printSection"></div>
     <div id="updateNotice" class="update-notice" role="status" hidden>
@@ -492,7 +504,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="script.js?v=3"></script>
+    <script src="script.js?v=4"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
@@ -501,7 +513,7 @@
                 const banner = document.getElementById('updateNotice');
                 if (wasControlled && banner) banner.hidden = false;
             });
-            navigator.serviceWorker.register('./sw.js?v=8', { updateViaCache: 'none' })
+            navigator.serviceWorker.register('./sw.js?v=9', { updateViaCache: 'none' })
                 .then(registration => registration.update())
                 .catch(() => {});
         }

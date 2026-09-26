@@ -23,4 +23,5 @@
   <symbol id="alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3zm0 6v5m0 3h.01"/></symbol>
   <symbol id="close" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></symbol>
   <symbol id="arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+  <symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s3.8-6 10-6 10 6 10 6-3.8 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></symbol>
 </svg>

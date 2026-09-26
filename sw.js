@@ -1,15 +1,15 @@
-const CACHE_NAME = 'oficina-os-cache-v8-sem-emojis';
+const CACHE_NAME = 'oficina-os-cache-v9-usabilidade';
 const urlsToCache = [
   'index.html',
   'style.css',
-  'redesign.css?v=3',
-  'icons.svg?v=3',
+  'redesign.css?v=4',
+  'icons.svg?v=4',
   'app-icon-192.png',
   'app-icon-512.png',
-  'script.js?v=3',
+  'script.js?v=4',
   'garantia.html',
   'garantia.js',
-  'manifest.json?v=3'
+  'manifest.json?v=4'
 ];
 
 self.addEventListener('install', event => {

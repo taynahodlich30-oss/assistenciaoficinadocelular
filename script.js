@@ -29,6 +29,9 @@ let canvas, ctx;
 let assinaturaVazia = '';
 let isDrawing = false;
 let statusFiltroAtual = "Todos";
+let estadoInicialOS = '';
+let versaoPreviewOS = 0;
+let focoAntesDoDescarteOS = null;
 const componentes = ['Tela', 'Bateria', 'Conector de carga', 'FPC', 'Memória', 'Câmera frontal', 'Câmera traseira', 'Alto-falante', 'Auricular', 'Microfone', 'Botão power', 'Botão volume', 'Flex', 'Placa de carga', 'Placa principal', 'Tampa traseira', 'Carcaça', 'Lente da câmera', 'Antena', 'Sensor biométrico', 'Motor de vibração', 'Gaveta do chip', 'Vidro traseiro'];
 const variantesPeca = { Tela: ['Incell com aro', 'Incell sem aro', 'OLED com aro', 'OLED sem aro', 'Original com aro', 'Original sem aro', 'AMOLED', 'LCD', 'Primeira linha'], Bateria: ['Premium', 'Primeira linha', 'Original', 'Compatível'], 'Conector de carga': ['USB-C', 'Micro USB', 'Lightning', 'Placa de carga completa'], Memória: ['RAM', 'Armazenamento', 'Chip de memória'], FPC: ['Tela', 'Bateria', 'Carga', 'Câmera', 'Outro'] };
 const tiposServico = ['Remoção de FRP', 'Remoção de vírus', 'Limpeza de software', 'Formatação', 'Atualização de sistema', 'Recuperação de dados', 'Backup', 'Transferência de dados', 'Desbloqueio de tela', 'Instalação de aplicativos', 'Limpeza química', 'Microssolda', 'Diagnóstico'];
@@ -68,6 +71,16 @@ async function validarSenha() {
     try { await auth.signInWithEmailAndPassword(email, senha); }
     catch (e) { document.getElementById('loginError').innerText = 'Não foi possível entrar. Confira o e-mail, a senha e se o usuário foi criado no Firebase Authentication.'; }
     finally { botao.disabled = false; }
+}
+
+function alternarVisibilidadeSenha() {
+    const senha = document.getElementById('passwordInput');
+    const botao = document.getElementById('passwordToggle');
+    const mostrar = senha.type === 'password';
+    senha.type = mostrar ? 'text' : 'password';
+    botao.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
+    botao.setAttribute('aria-pressed', String(mostrar));
+    senha.focus();
 }
 
 function checarSessao() {
@@ -230,9 +243,13 @@ function editarOS(osId) {
     abrirModalOS();
 }
 
-function filtrarPorStatus(status) {
+function filtrarPorStatus(status, rolarParaLista = true) {
     statusFiltroAtual = status;
-    document.querySelectorAll('.metric-card').forEach(card => card.classList.remove('active'));
+    document.getElementById('statusFilter').value = status;
+    document.querySelectorAll('.metric-card').forEach(card => {
+        card.classList.remove('active');
+        card.setAttribute('aria-pressed', 'false');
+    });
 
     if (status === 'Todos') document.getElementById('cardFilterTodos').classList.add('active');
     if (status === 'Em análise') document.getElementById('cardFilterAnalise').classList.add('active');
@@ -240,8 +257,10 @@ function filtrarPorStatus(status) {
     if (status === 'Em reparo') document.getElementById('cardFilterReparo').classList.add('active');
     if (status === 'Pronto') document.getElementById('cardFilterProntos').classList.add('active');
 
-    document.getElementById('filterCurrentTitle').innerText = status === 'Todos' ? 'Exibindo: Todas as Ordens de Serviço' : `Exibindo: Categoria "${status}"`;
+    document.querySelector('.metric-card.active')?.setAttribute('aria-pressed', 'true');
+    document.getElementById('filterCurrentTitle').innerText = status === 'Todos' ? 'Etapa: todas' : `Etapa: ${status}`;
     atualizarPainel();
+    if (rolarParaLista) document.getElementById('ordersSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function salvarPecaEstoque(e) {
@@ -277,7 +296,7 @@ function renderizarEstoque() {
                 <strong class="stock-name">${item.nome}</strong><br>
                 <small>Fornecedor: <b class="stock-supplier">${item.fornecedor || 'Não especificado'}</b> | Qtd: ${item.qtd} un | R$ ${item.custo.toFixed(2)}</small>
             </div>
-            ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#alert"></use></svg> Baixo</span>' : ''}
+            ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#alert"></use></svg> Baixo</span>' : ''}
         `;
         list.appendChild(div);
     });
@@ -344,12 +363,14 @@ async function alterarStatusOS(osId, novoStatus) {
 function previewImages(event) {
     const files = event.target.files;
     const container = document.getElementById('previewContainer');
+    const versaoAtual = ++versaoPreviewOS;
     container.innerHTML = '';
     fotosTemp = [];
 
     Array.from(files).forEach(file => {
         const reader = new FileReader();
         reader.onload = function(e) {
+            if (versaoAtual !== versaoPreviewOS) return;
             fotosTemp.push(e.target.result);
             const img = document.createElement('img');
             img.src = e.target.result;
@@ -429,17 +450,20 @@ async function salvarOS(event) {
     botaoSalvar.disabled = false;
     avisar('OS salva no Firebase com sucesso.');
 
-    fecharModalOS();
-    document.getElementById('osForm').reset();
-    document.getElementById('partVariant').innerHTML = '<option value="">Selecione a opção...</option>';
-    document.getElementById('editDocId').value = '';
-    document.getElementById('editOSId').value = '';
-    document.getElementById('modalTitle').innerText = "Criar Ordem de Serviço";
-    document.getElementById('btnSaveOS').innerText = "Salvar Ordem de Serviço";
-    document.getElementById('previewContainer').innerHTML = '';
-    document.getElementById('clientHistoryAlert').innerText = '';
-    fotosTemp = [];
-    limparAssinatura();
+    fecharModalOS(true);
+}
+
+function escaparHtml(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caractere => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[caractere]);
+}
+
+function urlFotoSegura(valor) {
+    const foto = String(valor || '');
+    if (/^data:image\/(?:png|jpe?g|webp|gif|avif|heic|heif|bmp);base64,[a-z0-9+/=]+$/i.test(foto)) return escaparHtml(foto);
+    try {
+        const url = new URL(foto);
+        return url.protocol === 'https:' ? escaparHtml(url.href) : '';
+    } catch { return ''; }
 }
 
 function atualizarPainel() {
@@ -483,17 +507,24 @@ function atualizarPainel() {
             if (partes.length !== 3 || `${partes[2]}-${partes[1]}` !== mes) return false;
         }
         return !termo || [os.idOS, os.cliente, os.whatsapp, os.modelo, os.imei, os.fornecedorPeca, os.defeito].some(valor => String(valor || '').toLocaleLowerCase('pt-BR').includes(termo));
+    }).sort((a, b) => {
+        const chaveData = data => {
+            const [dia, mes, ano] = String(data || '').split('/').map(Number);
+            return (ano || 0) * 10000 + (mes || 0) * 100 + (dia || 0);
+        };
+        return chaveData(b.data) - chaveData(a.data);
     });
-    document.getElementById('resultsCount').textContent = `${ordensFiltradas.length} de ${ordensServico.length} OS exibidas`;
-    if (!ordensFiltradas.length) osList.innerHTML = '<div class="empty-state">Nenhuma OS encontrada para esses filtros.</div>';
+    const quantidade = ordensFiltradas.length;
+    document.getElementById('resultsCount').textContent = `${quantidade} ${quantidade === 1 ? 'ordem encontrada' : 'ordens encontradas'} de ${ordensServico.length}`;
+    if (!quantidade) {
+        osList.innerHTML = ordensServico.length
+            ? '<div class="empty-state"><span class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#search"></use></svg></span><h3>Nenhuma ordem encontrada</h3><p>Tente outro nome, aparelho ou ajuste os filtros.</p><button type="button" class="empty-action" onclick="limparFiltros()">Limpar filtros</button></div>'
+            : '<div class="empty-state"><span class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#clipboard"></use></svg></span><h3>Sua primeira ordem começa aqui</h3><p>Cadastre um aparelho para acompanhar o atendimento do início à entrega.</p><button type="button" class="empty-action" onclick="abrirModalOS()">Criar primeira ordem</button></div>';
+    }
 
     ordensFiltradas.forEach((os) => {
-        let fotosHTML = '';
-        if (os.fotos && os.fotos.length > 0) {
-            fotosHTML = '<div class="preview-container">';
-            os.fotos.forEach(f => { fotosHTML += `<img src="${f}" class="preview-thumb">`; });
-            fotosHTML += '</div>';
-        }
+        const fotosSeguras = (os.fotos || []).map(urlFotoSegura).filter(Boolean);
+        const fotosHTML = fotosSeguras.length ? `<div class="preview-container">${fotosSeguras.map(f => `<img src="${f}" class="preview-thumb" alt="Foto do aparelho" loading="lazy">`).join('')}</div>` : '';
 
         let classePagamento = 'payment-pending';
         if (os.statusPagamento === "Pago") classePagamento = 'payment-paid';
@@ -503,35 +534,49 @@ function atualizarPainel() {
         card.className = 'os-card';
         card.innerHTML = `
             <div class="os-card-header">
-                <div class="os-identity"><span class="os-code">${os.idOS}</span><strong>${os.cliente}</strong></div>
-                <select class="status-select" onchange="alterarStatusOS('${os.idOS}', this.value)">
+                <div class="os-identity"><span class="os-code">${escaparHtml(os.idOS)}</span><strong>${escaparHtml(os.cliente)}</strong></div>
+                <select class="status-select" aria-label="Etapa da OS ${escaparHtml(os.idOS)}">
                     <option value="Em análise" ${os.status === 'Em análise' ? 'selected' : ''}>Em análise</option>
                     <option value="Em orçamento" ${os.status === 'Em orçamento' ? 'selected' : ''}>Em orçamento</option>
                     <option value="Em reparo" ${os.status === 'Em reparo' ? 'selected' : ''}>Em reparo</option>
                     <option value="Pronto" ${os.status === 'Pronto' ? 'selected' : ''}>Pronto</option>
                 </select>
             </div>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#phone"></use></svg> <strong>Aparelho:</strong> ${os.modelo} (IMEI: ${os.imei})</p>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tool"></use></svg> <strong>Defeito Relatado:</strong> ${os.defeito}</p>
-            <p class="os-repair"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tool"></use></svg> <strong>Componentes Trocados:</strong> ${os.pecasTrocadas || 'Nenhum registrado'}</p>
-            <p class="os-secondary"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#clipboard"></use></svg> <strong>Descrição:</strong> ${os.descricaoServico || 'Sem detalhes'}</p>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tag"></use></svg> <strong>Fornecedor Peça:</strong> <strong class="os-supplier">${os.fornecedorPeca || 'Não Informado'}</strong></p>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#wallet"></use></svg> <strong>Pagamento:</strong> <span class="payment-badge ${classePagamento}">${os.statusPagamento || 'Aguardando'}</span> — recebido R$ ${valorEfetivamenteRecebido(os).toFixed(2)} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
-            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#wallet"></use></svg> <strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
-            ${fotosHTML}
+            <div class="os-card-main"><div><span class="os-overline">APARELHO</span><strong>${escaparHtml(os.modelo)}</strong></div><div><span class="os-overline">DEFEITO INFORMADO</span><strong>${escaparHtml(os.defeito)}</strong></div><div class="os-card-price"><span class="os-overline">VALOR DA OS</span><strong>R$ ${Number(os.valor || 0).toFixed(2)}</strong></div></div>
+            <div class="os-card-badges"><span class="payment-badge ${classePagamento}">${escaparHtml(os.statusPagamento || 'Aguardando')}</span><span>Recebido: R$ ${valorEfetivamenteRecebido(os).toFixed(2)}</span></div>
+            <details class="os-card-details"><summary>Ver detalhes do aparelho</summary><div class="os-card-details-body">
+                <p><strong>IMEI / Série:</strong> ${escaparHtml(os.imei)}</p>
+                <p><strong>Componentes trocados:</strong> ${escaparHtml(os.pecasTrocadas || 'Nenhum registrado')}</p>
+                <p><strong>Descrição do serviço:</strong> ${escaparHtml(os.descricaoServico || 'Sem detalhes')}</p>
+                <p><strong>Fornecedor:</strong> ${escaparHtml(os.fornecedorPeca || 'Não informado')} · <strong>Custo da peça:</strong> R$ ${Number(os.custoPeca || 0).toFixed(2)}</p>
+                ${os.detalhesPagamento ? `<p><strong>Pagamento:</strong> ${escaparHtml(os.detalhesPagamento)}</p>` : ''}
+                ${fotosHTML}
+            </div></details>
             <div class="os-card-actions">
-                <button class="btn-sm btn-wa-orcamento" onclick="abrirModalOrcamentoOpcoes('${os.idOS}', '${os.whatsapp}', '${os.modelo}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#clock"></use></svg> Orçamento</button>
-                <button class="btn-sm btn-wa-aprovado" onclick="waNotificarAprovado('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#check"></use></svg> Aprovado</button>
-                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#check"></use></svg> Pronto</button>
-                <button class="btn-sm btn-wa-comprovante" onclick="waEnviarComprovante('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#send"></use></svg> Via Zap</button>
+                <button type="button" class="btn-sm btn-edit" data-os-action="editar"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#edit"></use></svg> Editar OS</button>
+                <button type="button" class="btn-sm btn-wa-orcamento" data-os-action="orcamento"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#clock"></use></svg> Orçamento</button>
+                <button type="button" class="btn-sm btn-wa-pronto" data-os-action="pronto"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#send"></use></svg> Avisar pronto</button>
             </div>
-            <div class="os-card-subactions">
-                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#print"></use></svg> OS Papel</button>
-                <button class="btn-sm" onclick="imprimirEtiqueta('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#tag"></use></svg> Etiqueta</button>
-                <button class="btn-sm btn-edit" onclick="editarOS('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#edit"></use></svg> Editar</button>
-                <button class="btn-sm btn-delete" onclick="excluirOS('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#trash"></use></svg> Excluir</button>
-            </div>
+            <details class="os-card-more"><summary>Mais ações <svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#arrow"></use></svg></summary><div class="os-card-subactions">
+                <button type="button" class="btn-sm btn-wa-aprovado" data-os-action="aprovado"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#check"></use></svg> Avisar aprovação</button>
+                <button type="button" class="btn-sm btn-wa-comprovante" data-os-action="garantia"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#shield"></use></svg> Enviar garantia</button>
+                <button type="button" class="btn-sm" data-os-action="imprimir"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#print"></use></svg> Imprimir OS</button>
+                <button type="button" class="btn-sm" data-os-action="etiqueta"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#tag"></use></svg> Imprimir etiqueta</button>
+                <button type="button" class="btn-sm btn-delete" data-os-action="excluir"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#trash"></use></svg> Excluir OS</button>
+            </div></details>
         `;
+        card.querySelector('.status-select').addEventListener('change', event => alterarStatusOS(os.idOS, event.target.value));
+        const acoes = {
+            editar: () => editarOS(os.idOS),
+            orcamento: () => abrirModalOrcamentoOpcoes(os.idOS, os.whatsapp, os.modelo),
+            pronto: () => waPronto(os.whatsapp, os.idOS, os.modelo, os.valor),
+            aprovado: () => waNotificarAprovado(os.idOS),
+            garantia: () => waEnviarComprovante(os.idOS),
+            imprimir: () => imprimirCupom(os.idOS),
+            etiqueta: () => imprimirEtiqueta(os.idOS),
+            excluir: () => excluirOS(os.idOS)
+        };
+        card.querySelectorAll('[data-os-action]').forEach(botao => botao.addEventListener('click', acoes[botao.dataset.osAction]));
         osList.appendChild(card);
     });
 }
@@ -669,19 +714,57 @@ function waPronto(telefone, osId, modelo, valor) {
     window.open(`https://wa.me/55${num}?text=${msg}`, '_blank');
 }
 
-function abrirModalOS() { 
-    document.getElementById('osModal').style.display = 'flex'; 
+function estadoFormularioOS() {
+    const campos = Array.from(document.querySelectorAll('#osForm input, #osForm select, #osForm textarea'));
+    return JSON.stringify({
+        campos: campos.map(campo => campo.type === 'checkbox' ? campo.checked : campo.type === 'file' ? Array.from(campo.files, file => file.name) : campo.value),
+        assinatura: canvas?.toDataURL() || '',
+        fotos: fotosTemp.length
+    });
 }
 
-function fecharModalOS() { 
-    document.getElementById('osModal').style.display = 'none'; 
+function abrirModalOS() {
+    const modal = document.getElementById('osModal');
+    modal.style.display = 'flex';
+    modal.querySelector('.modal-card').scrollTop = 0;
+    estadoInicialOS = estadoFormularioOS();
+}
+
+function fecharModalOS(forcar = false) {
+    if (!forcar && estadoFormularioOS() !== estadoInicialOS) {
+        focoAntesDoDescarteOS = document.activeElement;
+        document.getElementById('discardModal').style.display = 'flex';
+        document.querySelector('#discardModal .btn-dark').focus();
+        return;
+    }
+    descartarFormularioOS();
+}
+
+function continuarEditandoOS() {
+    document.getElementById('discardModal').style.display = 'none';
+    focoAntesDoDescarteOS?.focus();
+    focoAntesDoDescarteOS = null;
+}
+
+function descartarFormularioOS() {
+    document.getElementById('discardModal').style.display = 'none';
+    document.getElementById('osModal').style.display = 'none';
+    versaoPreviewOS++;
     document.getElementById('osForm').reset();
     document.getElementById('partSummary').textContent = '';
+    document.getElementById('partVariant').innerHTML = '<option value="">Selecione a opção...</option>';
+    document.getElementById('previewContainer').innerHTML = '';
+    document.getElementById('clientHistoryAlert').textContent = '';
+    document.getElementById('saveError').textContent = '';
+    fotosTemp = [];
+    limparAssinatura();
     mostrarAbaReparo('pecas');
     document.getElementById('editDocId').value = '';
     document.getElementById('editOSId').value = '';
     document.getElementById('modalTitle').innerText = "Criar Ordem de Serviço";
     document.getElementById('btnSaveOS').innerText = "Salvar Ordem de Serviço";
+    estadoInicialOS = '';
+    focoAntesDoDescarteOS = null;
 }
 
 function valorEfetivamenteRecebido(os) {
@@ -936,7 +1019,7 @@ function limparFiltros() {
     document.getElementById('searchInput').value = '';
     document.getElementById('paymentFilter').value = 'Todos';
     document.getElementById('monthFilter').value = '';
-    filtrarPorStatus('Todos');
+    filtrarPorStatus('Todos', false);
 }
 
 function imprimirCupom(osId) {
@@ -948,7 +1031,7 @@ function imprimirCupom(osId) {
     const printSection = document.getElementById('printSection');
     printSection.innerHTML = `
         <div style="font-family: Arial, sans-serif; width: 100%; max-width: 300px; margin: 0 auto; color: #000;">
-            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=3#phone"></use></svg> OFICINA DO CELULAR</h2>
+            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#phone"></use></svg> OFICINA DO CELULAR</h2>
             <p style="text-align: center; margin: 2px 0; font-size: 12px;">ORDEM DE SERVIÇO</p>
             <p style="text-align: center; font-size: 11px; margin-bottom: 5px;">Data: ${os.data}</p>
             <hr style="border-top: 1px dashed #000; margin: 5px 0;">
