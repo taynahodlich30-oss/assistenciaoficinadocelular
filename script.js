@@ -277,7 +277,7 @@ function renderizarEstoque() {
                 <strong style="color:#38bdf8">${item.nome}</strong><br>
                 <small style="color:#cbd5e1">Fornecedor: <b style="color:#a855f7;">${item.fornecedor || 'Não especificado'}</b> | Qtd: ${item.qtd} un | R$ ${item.custo.toFixed(2)}</small>
             </div>
-            ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;">⚠️ Baixo</span>' : ''}
+            ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#alert"></use></svg> Baixo</span>' : ''}
         `;
         list.appendChild(div);
     });
@@ -322,9 +322,9 @@ function verificarHistoricoCliente() {
     const alertBox = document.getElementById('clientHistoryAlert');
     
     if (anteriores.length > 0) {
-        alertBox.innerText = `🔍 Cliente antigo! ${anteriores.length} OS anterior(es) encontrada(s).`;
+        alertBox.innerText = `Cliente antigo! ${anteriores.length} OS anterior(es) encontrada(s).`;
     } else {
-        alertBox.innerText = `✨ Novo cliente no sistema.`;
+        alertBox.innerText = `Novo cliente no sistema.`;
     }
 }
 
@@ -511,25 +511,25 @@ function atualizarPainel() {
                     <option value="Pronto" ${os.status === 'Pronto' ? 'selected' : ''}>Pronto</option>
                 </select>
             </div>
-            <p>📱 <strong>Aparelho:</strong> ${os.modelo} (IMEI: ${os.imei})</p>
-            <p>🔧 <strong>Defeito Relatado:</strong> ${os.defeito}</p>
-            <p style="color: #4ade80;">⚙️ <strong>Componentes Trocados:</strong> ${os.pecasTrocadas || 'Nenhum registrado'}</p>
-            <p style="color: #cbd5e1; font-size: 12px;">📝 <strong>Descrição:</strong> ${os.descricaoServico || 'Sem detalhes'}</p>
-            <p>🏷️ <strong>Fornecedor Peça:</strong> <strong style="color: #a855f7;">${os.fornecedorPeca || 'Não Informado'}</strong></p>
-            <p>💳 <strong>Pagamento:</strong> <span style="color:${corPagamento}; font-weight:bold;">${os.statusPagamento || 'Aguardando'}</span> — recebido R$ ${valorEfetivamenteRecebido(os).toFixed(2)} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
-            <p>💰 <strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#phone"></use></svg> <strong>Aparelho:</strong> ${os.modelo} (IMEI: ${os.imei})</p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#tool"></use></svg> <strong>Defeito Relatado:</strong> ${os.defeito}</p>
+            <p style="color: #4ade80;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#tool"></use></svg> <strong>Componentes Trocados:</strong> ${os.pecasTrocadas || 'Nenhum registrado'}</p>
+            <p style="color: #cbd5e1; font-size: 12px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#clipboard"></use></svg> <strong>Descrição:</strong> ${os.descricaoServico || 'Sem detalhes'}</p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#tag"></use></svg> <strong>Fornecedor Peça:</strong> <strong style="color: #a855f7;">${os.fornecedorPeca || 'Não Informado'}</strong></p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#wallet"></use></svg> <strong>Pagamento:</strong> <span style="color:${corPagamento}; font-weight:bold;">${os.statusPagamento || 'Aguardando'}</span> — recebido R$ ${valorEfetivamenteRecebido(os).toFixed(2)} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
+            <p><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#wallet"></use></svg> <strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)} | <strong>Custo Peça:</strong> R$ ${(os.custoPeca || 0).toFixed(2)}</p>
             ${fotosHTML}
             <div class="os-card-actions">
-                <button class="btn-sm btn-wa-orcamento" onclick="abrirModalOrcamentoOpcoes('${os.idOS}', '${os.whatsapp}', '${os.modelo}')">🟡 Orçamento</button>
-                <button class="btn-sm btn-wa-aprovado" onclick="waNotificarAprovado('${os.idOS}')">👍 Aprovado</button>
-                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')">🟢 Pronto</button>
-                <button class="btn-sm btn-wa-comprovante" onclick="waEnviarComprovante('${os.idOS}')">📲 Via Zap</button>
+                <button class="btn-sm btn-wa-orcamento" onclick="abrirModalOrcamentoOpcoes('${os.idOS}', '${os.whatsapp}', '${os.modelo}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#clock"></use></svg> Orçamento</button>
+                <button class="btn-sm btn-wa-aprovado" onclick="waNotificarAprovado('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#check"></use></svg> Aprovado</button>
+                <button class="btn-sm btn-wa-pronto" onclick="waPronto('${os.whatsapp}', '${os.idOS}', '${os.modelo}', '${os.valor}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#check"></use></svg> Pronto</button>
+                <button class="btn-sm btn-wa-comprovante" onclick="waEnviarComprovante('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#send"></use></svg> Via Zap</button>
             </div>
             <div class="os-card-subactions">
-                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')">🖨️ OS Papel</button>
-                <button class="btn-sm" style="background:#a855f7;" onclick="imprimirEtiqueta('${os.idOS}')">🏷️ Etiqueta</button>
-                <button class="btn-sm btn-edit" onclick="editarOS('${os.idOS}')">✏️ Editar</button>
-                <button class="btn-sm btn-delete" onclick="excluirOS('${os.idOS}')">🗑️ Excluir</button>
+                <button class="btn-sm" onclick="imprimirCupom('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#print"></use></svg> OS Papel</button>
+                <button class="btn-sm" style="background:#a855f7;" onclick="imprimirEtiqueta('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#tag"></use></svg> Etiqueta</button>
+                <button class="btn-sm btn-edit" onclick="editarOS('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#edit"></use></svg> Editar</button>
+                <button class="btn-sm btn-delete" onclick="excluirOS('${os.idOS}')"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#trash"></use></svg> Excluir</button>
             </div>
         `;
         osList.appendChild(card);
@@ -948,7 +948,7 @@ function imprimirCupom(osId) {
     const printSection = document.getElementById('printSection');
     printSection.innerHTML = `
         <div style="font-family: Arial, sans-serif; width: 100%; max-width: 300px; margin: 0 auto; color: #000;">
-            <h2 style="text-align: center; margin: 0; font-size: 16px;">📱 OFICINA DO CELULAR</h2>
+            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg#phone"></use></svg> OFICINA DO CELULAR</h2>
             <p style="text-align: center; margin: 2px 0; font-size: 12px;">ORDEM DE SERVIÇO</p>
             <p style="text-align: center; font-size: 11px; margin-bottom: 5px;">Data: ${os.data}</p>
             <hr style="border-top: 1px dashed #000; margin: 5px 0;">

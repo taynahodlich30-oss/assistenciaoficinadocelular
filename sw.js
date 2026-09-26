@@ -1,7 +1,9 @@
-const CACHE_NAME = 'oficina-os-cache-v5';
+const CACHE_NAME = 'oficina-os-cache-v7-painel';
 const urlsToCache = [
   'index.html',
   'style.css',
+  'redesign.css?v=2',
+  'icons.svg',
   'script.js',
   'garantia.html',
   'garantia.js',
