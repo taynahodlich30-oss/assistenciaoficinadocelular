@@ -633,15 +633,53 @@ function waNotificarAprovado(osId) {
     window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
 }
 
+function telefoneGarantiaWhatsApp(telefone) {
+    let numero = String(telefone || '').replace(/\D/g, '');
+    if (numero.length === 10 || numero.length === 11) numero = '55' + numero;
+    if (!/^55\d{10,11}$/.test(numero)) throw new Error('Confira o WhatsApp do cliente com DDD antes de enviar a garantia.');
+    return numero;
+}
+
+function codigoCurtoGarantia(token) {
+    if (!/^[0-9a-f]{48}$/.test(token)) throw new Error('Código da garantia inválido.');
+    const bytes = token.match(/../g).map(par => parseInt(par, 16));
+    return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function conferirPaginaGarantia() {
+    const pagina = new URL('g.html', location.href);
+    if (pagina.protocol !== 'https:') throw new Error('Abra o site publicado em HTTPS para enviar um link de garantia ao cliente.');
+    const teste = new URL(pagina.href);
+    teste.searchParams.set('verificar', String(Date.now()));
+    const resposta = await fetch(teste.href, { cache: 'no-store' });
+    if (!resposta.ok || !(await resposta.text()).includes('data-atalho-garantia')) {
+        throw new Error('O arquivo g.html ainda não está publicado no site. Envie todos os arquivos da atualização ao GitHub.');
+    }
+    return pagina;
+}
+
+function bancoPublicoGarantia() {
+    const nome = 'consulta-publica-garantia';
+    const app = firebase.apps.find(item => item.name === nome) || firebase.initializeApp(firebaseConfig, nome);
+    return app.firestore();
+}
+
 async function waEnviarComprovante(osId) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (!os) return;
     const pagamentoConfirmado = os.statusPagamento === 'Pago' || confirm('O pagamento desta OS já foi recebido?\n\nOK: marcar como Pago e enviar a garantia.\nCancelar: enviar a garantia sem alterar o pagamento.');
     const janela = window.open('about:blank', '_blank');
     if (!janela) { alert('Permita abrir a janela do WhatsApp para enviar a garantia.'); return; }
+    let gravado = false;
+    let pagina, numero, token;
     try {
         if (!db || !os.idDoc || !crypto?.getRandomValues) throw new Error('Firebase ou gerador de código indisponível');
-        const token = os.garantiaToken || Array.from(crypto.getRandomValues(new Uint8Array(24)), b => b.toString(16).padStart(2, '0')).join('');
+        numero = telefoneGarantiaWhatsApp(os.whatsapp);
+        pagina = await conferirPaginaGarantia();
+        token = os.garantiaToken || Array.from(crypto.getRandomValues(new Uint8Array(24)), b => b.toString(16).padStart(2, '0')).join('');
+        const codigoCurto = codigoCurtoGarantia(token);
+        const publico = bancoPublicoGarantia().collection('garantias_publicas').doc(token);
+        await publico.get({ source: 'server' });
         const inicio = os.garantiaInicio || new Date().toISOString().slice(0, 10);
         const validade = new Date(inicio + 'T12:00:00Z');
         validade.setUTCDate(validade.getUTCDate() + 90);
@@ -656,6 +694,7 @@ async function waEnviarComprovante(osId) {
             ...(pagamentoConfirmado ? { statusPagamento: 'Pago', valorRecebido: Number(os.valor || 0) } : {})
         });
         await lote.commit();
+        gravado = true;
         os.garantiaToken = token;
         os.garantiaInicio = inicio;
         if (pagamentoConfirmado) {
@@ -664,42 +703,42 @@ async function waEnviarComprovante(osId) {
         }
         localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
         atualizarPainel();
+        const documento = await publico.get({ source: 'server' });
+        if (!documento.exists) throw new Error('A garantia foi gravada, mas ainda não apareceu na consulta pública. Aguarde e tente enviar novamente.');
+        pagina.searchParams.set('c', codigoCurto);
     } catch(error) {
         janela.close();
-        avisar('Não foi possível preparar a garantia no Firebase. Nenhum pagamento foi alterado. Confira as regras e tente novamente.', true);
+        const detalhe = error?.code === 'permission-denied'
+            ? 'A leitura pública da garantia foi bloqueada pelas regras do Firestore. Confira a regra de get em garantias_publicas.'
+            : error?.message || 'Verifique sua conexão e tente novamente.';
+        avisar((gravado ? 'A garantia foi salva, mas o link não foi enviado. ' : 'A garantia não foi enviada nem o pagamento alterado. ') + detalhe, true);
         return;
     }
 
-    const num = os.whatsapp.replace(/\D/g, '');
-    const linkGarantia = new URL('garantia.html', location.href);
-    linkGarantia.searchParams.set('codigo', os.garantiaToken);
-    const qrCodeGarantia = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(linkGarantia.href)}`;
-
-    let statusPagamentoTexto = "AGUARDANDO PAGAMENTO";
+    let statusPagamentoTexto = "🟡 AGUARDANDO PAGAMENTO";
     if (os.statusPagamento === "Pago") {
-        statusPagamentoTexto = `PAGO (R$ ${os.valor.toFixed(2)})`;
+        statusPagamentoTexto = `🟢 PAGO (R$ ${os.valor.toFixed(2)})`;
     } else if (os.statusPagamento === "Parcial (Entrada/Resta)") {
-        statusPagamentoTexto = `PARCIAL ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}`;
+        statusPagamentoTexto = `🔵 PARCIAL ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}`;
     }
 
-    let texto = `*OFICINA DO CELULAR - COMPROVANTE DE ENTREGA E GARANTIA*\n\n`;
+    let texto = `*📱 OFICINA DO CELULAR - COMPROVANTE DE ENTREGA & GARANTIA*\n\n`;
     texto += `Prezado(a) *${os.cliente}*,\n`;
     texto += `Seu aparelho foi entregue com sucesso! Seguem os detalhes do serviço realizado:\n\n`;
-    texto += `*Ordem de serviço:* ${os.idOS}\n`;
-    texto += `*Aparelho:* ${os.modelo}\n`;
-    texto += `*Defeito relatado:* ${os.defeito}\n`;
-    texto += `*Componentes trocados:* ${os.pecasTrocadas || 'Reparo Efetuado'}\n`;
-    texto += `*Valor total:* R$ ${os.valor.toFixed(2)}\n`;
-    texto += `*Status do pagamento:* ${statusPagamentoTexto}\n\n`;
+    texto += `📄 *Ordem de Serviço:* ${os.idOS}\n`;
+    texto += `📱 *Aparelho:* ${os.modelo}\n`;
+    texto += `🔧 *Defeito Relatado:* ${os.defeito}\n`;
+    texto += `⚙️ *Componente(s) Trocado(s):* ${os.pecasTrocadas || 'Reparo Efetuado'}\n`;
+    texto += `💰 *Valor Total:* R$ ${os.valor.toFixed(2)}\n`;
+    texto += `💳 *Status do Pagamento:* ${statusPagamentoTexto}\n\n`;
     texto += `------------------------------------\n`;
-    texto += `*TERMO DE GARANTIA DIGITAL (90 DIAS)*\n`;
+    texto += `🛡️ *TERMO DE GARANTIA DIGITAL (90 DIAS)*\n`;
     texto += `Este comprovante assegura garantia de 90 dias a contar desta data para os componentes substituídos.\n`;
-    texto += `*A garantia não cobre:* Quedas, quebras, marcas de impacto, selos rompidos ou contato com líquidos.\n\n`;
-    texto += `*Consulte a validade da garantia:* ${linkGarantia.href}\n`;
-    texto += `*QR Code da garantia:* ${qrCodeGarantia}\n\n`;
+    texto += `⚠️ *A garantia não cobre:* Quedas, quebras, marcas de impacto, selos rompidos ou contato com líquidos.\n\n`;
+    texto += `🛡️ *Acompanhe sua garantia aqui:*\n${pagina.href}\n\n`;
     texto += `Agradecemos a preferência! Caso precise, estamos à disposição.`;
 
-    janela.location.href = `https://wa.me/55${num}?text=${encodeURIComponent(texto)}`;
+    janela.location.href = `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
 }
 
 function waPronto(telefone, osId, modelo, valor) {
@@ -1092,3 +1131,4 @@ function imprimirEtiqueta(osId) {
 }
 
 window.onload = function() { configurarCatalogos(); checarSessao(); };
+

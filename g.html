@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="pt-BR" data-atalho-garantia>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Garantia | Oficina do Celular</title><meta name="robots" content="noindex"></head>
+<body><p>Abrindo consulta de garantia… <a id="abrir" href="garantia.html">Abrir garantia</a></p>
+<script>
+const destino = new URL('garantia.html', location.href);
+const parametros = new URLSearchParams(location.search);
+const codigo = parametros.get('c') || parametros.get('codigo');
+if (codigo) destino.searchParams.set(parametros.has('c') ? 'c' : 'codigo', codigo);
+document.getElementById('abrir').href = destino.href;
+location.replace(destino.href);
+</script></body></html>
