@@ -59,6 +59,72 @@
         .form-tabs { display: flex; gap: 8px; margin: 18px 0 12px; }
         .form-tab { flex: 1; padding: 12px 8px; color: #cbd5e1; background: #0f172a; border: 1px solid #334155; }
         .form-tab.active { color: #0b1329; background: #38bdf8; border-color: #38bdf8; }
+
+
+<!-- Pesquisa inteligente de aparelhos - Oficina do Celular -->
+<style>
+.btn-search-action{background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;padding:12px 6px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px}
+.device-search-overlay{position:fixed;inset:0;background:rgba(2,6,23,.86);z-index:1200;display:none;align-items:flex-end;justify-content:center;padding:0}
+.device-search-card{width:100%;max-width:720px;max-height:92vh;overflow:auto;background:#162238;border:1px solid #334155;border-bottom:0;border-radius:22px 22px 0 0;padding:20px;box-shadow:0 -20px 60px rgba(0,0,0,.48)}
+.device-search-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.device-search-head h3{font-size:18px;color:#fff}.device-search-sub{font-size:12px;color:#94a3b8;margin-bottom:15px}
+.device-search-row{display:grid;grid-template-columns:150px 1fr;gap:8px}.device-search-row select,.device-search-row input{margin-bottom:8px}
+.device-result{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px;margin-top:8px;border:1px solid #334155;border-radius:12px;background:#0f172a}.device-result strong{display:block;color:#fff;font-size:14px}.device-result small{display:block;color:#94a3b8;margin-top:3px;line-height:1.45}.device-result button{flex-shrink:0;background:#22c55e;color:#052e16;padding:10px 12px;font-size:11px}.device-empty{padding:20px;text-align:center;color:#94a3b8;font-size:13px;border:1px dashed #334155;border-radius:12px;margin-top:10px}.device-search-tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.device-search-tools button,.device-search-tools a{background:#334155;color:#fff;padding:9px 11px;font-size:11px;border-radius:8px;text-decoration:none}.device-search-tools button.photo{background:#7c3aed}.device-search-note{font-size:11px;color:#94a3b8;line-height:1.5;margin-top:13px}@media(min-width:700px){.device-search-overlay{align-items:center;padding:18px}.device-search-card{border-bottom:1px solid #334155;border-radius:22px}}
+</style>
+<div id="deviceSearchModal" class="device-search-overlay" role="dialog" aria-modal="true" aria-label="Pesquisa de aparelho">
+  <section class="device-search-card">
+    <div class="device-search-head"><div><h3>Pesquisar aparelho</h3><p class="device-search-sub">Digite o código técnico ou o nome do modelo. Ex.: 25100RA69G</p></div><button class="btn-close" type="button" onclick="fecharPesquisaAparelho()">×</button></div>
+    <div class="device-search-row"><select id="deviceSearchBrand" onchange="pesquisarCatalogoAparelho()"><option value="">Todas as marcas</option></select><input id="deviceSearchQuery" type="search" placeholder="Código, marca ou modelo" oninput="pesquisarCatalogoAparelho()" autocomplete="off"></div>
+    <div id="deviceSearchResults"></div>
+    <div class="device-search-tools"><button type="button" onclick="pesquisarCatalogoAparelho(true)">Mostrar modelos cadastrados</button><button type="button" class="photo" onclick="document.getElementById('devicePhotoSearch').click()">📷 Tentar por foto</button><input id="devicePhotoSearch" type="file" accept="image/*" capture="environment" style="display:none" onchange="avisarPesquisaFoto()"><a id="deviceSearchWeb" href="#" target="_blank" rel="noopener">Pesquisar na internet</a></div>
+    <p class="device-search-note">A identificação pelo código é a mais confiável. A foto serve apenas como sugestão e deve ser confirmada antes de salvar a OS.</p>
+  </section>
+</div>
+<script>
+(function(){
+  const catalog=[
+    {brand:'Xiaomi',code:'25100RA69G',model:'Redmi Note 15 5G',info:'Código técnico Xiaomi · 5G'},
+    {brand:'Xiaomi',code:'2312DRA50G',model:'Redmi Note 13 Pro 5G',info:'Código técnico Xiaomi · 5G'},
+    {brand:'Xiaomi',code:'2312DRAABG',model:'Redmi Note 13 Pro+ 5G',info:'Código técnico Xiaomi · 5G'},
+    {brand:'Xiaomi',code:'22101316UG',model:'Redmi Note 12 Pro+ 5G',info:'Código técnico Xiaomi · 5G'},
+    {brand:'Xiaomi',code:'2201116SG',model:'Redmi Note 11 Pro 5G',info:'Código técnico Xiaomi · 5G'},
+    {brand:'Samsung',code:'SM-A155M',model:'Galaxy A15',info:'Samsung · 4G'},
+    {brand:'Samsung',code:'SM-A156M',model:'Galaxy A15 5G',info:'Samsung · 5G'},
+    {brand:'Samsung',code:'SM-A145M',model:'Galaxy A14',info:'Samsung · 4G'},
+    {brand:'Samsung',code:'SM-A146M',model:'Galaxy A14 5G',info:'Samsung · 5G'},
+    {brand:'Samsung',code:'SM-A055M',model:'Galaxy A05',info:'Samsung'},
+    {brand:'Samsung',code:'SM-A057M',model:'Galaxy A05s',info:'Samsung'},
+    {brand:'Samsung',code:'SM-A245M',model:'Galaxy A24',info:'Samsung'},
+    {brand:'Samsung',code:'SM-A346M',model:'Galaxy A34 5G',info:'Samsung · 5G'},
+    {brand:'Samsung',code:'SM-A546E',model:'Galaxy A54 5G',info:'Samsung · 5G'},
+    {brand:'Samsung',code:'SM-A736B',model:'Galaxy A73 5G',info:'Samsung · 5G'},
+    {brand:'Samsung',code:'SM-G991B',model:'Galaxy S21 5G',info:'Samsung · linha S'},
+    {brand:'Samsung',code:'SM-S918B',model:'Galaxy S23 Ultra',info:'Samsung · linha S'},
+    {brand:'Samsung',code:'SM-S921B',model:'Galaxy S24',info:'Samsung · linha S'},
+    {brand:'Samsung',code:'SM-S928B',model:'Galaxy S24 Ultra',info:'Samsung · linha S'},
+    {brand:'Motorola',code:'XT-2341-1',model:'Moto G54 5G',info:'Motorola · 5G'},
+    {brand:'Motorola',code:'XT-2313-5',model:'Moto G53 5G',info:'Motorola · 5G'},
+    {brand:'Motorola',code:'XT-2331-2',model:'Moto G84 5G',info:'Motorola · 5G'},
+    {brand:'Motorola',code:'XT-2205-1',model:'Moto G62 5G',info:'Motorola · 5G'},
+    {brand:'Motorola',code:'XT-2163-4',model:'Moto G22',info:'Motorola'},
+    {brand:'Apple',code:'A2111',model:'iPhone 11',info:'Apple'},
+    {brand:'Apple',code:'A2221',model:'iPhone 11 Pro',info:'Apple'},
+    {brand:'Apple',code:'A2633',model:'iPhone 13',info:'Apple'},
+    {brand:'Apple',code:'A2890',model:'iPhone 14 Pro Max',info:'Apple'},
+    {brand:'Apple',code:'A3094',model:'iPhone 15',info:'Apple'},
+    {brand:'Realme',code:'RMX3710',model:'realme C55',info:'realme'},
+    {brand:'Realme',code:'RMX3630',model:'realme C35',info:'realme'}
+  ];
+  const norm=v=>String(v||'').toUpperCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^A-Z0-9]/g,'');
+  const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function brands(){const s=document.getElementById('deviceSearchBrand');if(!s||s.options.length>1)return;[...new Set(catalog.map(x=>x.brand))].sort().forEach(b=>s.add(new Option(b,b)))}
+  window.abrirPesquisaAparelho=function(){brands();const m=document.getElementById('deviceSearchModal');m.style.display='flex';document.getElementById('deviceSearchQuery').focus();pesquisarCatalogoAparelho()};
+  window.fecharPesquisaAparelho=function(){document.getElementById('deviceSearchModal').style.display='none'};
+  window.pesquisarCatalogoAparelho=function(showAll){const q=norm(document.getElementById('deviceSearchQuery').value);const b=document.getElementById('deviceSearchBrand').value;const out=document.getElementById('deviceSearchResults');const link=document.getElementById('deviceSearchWeb');const found=catalog.filter(x=>(!b||x.brand===b)&&(showAll||!q||[x.brand,x.code,x.model].some(v=>norm(v).includes(q)))).slice(0,30);if(q)link.href='https://www.google.com/search?q='+encodeURIComponent(q+' celular modelo codigo');else link.href='#';out.innerHTML=found.length?found.map(x=>'<article class="device-result"><div><strong>'+esc(x.brand+' '+x.model)+'</strong><small>Código: '+esc(x.code)+' · '+esc(x.info)+'</small></div><button type="button" onclick="usarAparelhoNaOS(\''+esc(x.code)+'\')">Usar na OS</button></article>').join(''):'<div class="device-empty">Nenhum modelo encontrado. Use “Pesquisar na internet” para consultar outros códigos.</div>'};
+  window.usarAparelhoNaOS=function(code){const x=catalog.find(item=>item.code===code);if(!x)return;const input=document.getElementById('deviceModel');if(typeof abrirModalOS==='function')abrirModalOS();if(input){input.value=x.brand+' '+x.model;input.dataset.deviceCode=x.code;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus()}fecharPesquisaAparelho();if(typeof avisar==='function')avisar(x.brand+' '+x.model+' preenchido na OS.')};
+  window.avisarPesquisaFoto=function(){if(typeof avisar==='function')avisar('A foto foi selecionada. Use o código técnico para confirmar o modelo com segurança.');else alert('Use o código técnico para confirmar o modelo com segurança.')};
+  document.addEventListener('DOMContentLoaded',function(){const bar=document.querySelector('.action-bar');if(bar&&!document.getElementById('deviceSearchButton')){const b=document.createElement('button');b.id='deviceSearchButton';b.type='button';b.className='btn-search-action';b.innerHTML='🔎 <span>Pesquisar modelo</span>';b.onclick=abrirPesquisaAparelho;bar.appendChild(b)}});
+})();
+</script>
         .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 8px; margin: 8px 0 16px; }
         .choice-item { display: flex; align-items: center; gap: 7px; padding: 11px 9px; border: 1px solid #334155; background: #0f172a; border-radius: 9px; cursor: pointer; }
         .choice-item:has(input:checked) { border-color: #38bdf8; background: #14334b; color: #fff; }
