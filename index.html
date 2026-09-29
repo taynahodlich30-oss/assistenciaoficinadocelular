@@ -538,52 +538,9 @@
     <p class="device-search-note">A identificação pelo código é a mais confiável. A foto serve apenas como sugestão e deve ser confirmada antes de salvar a OS.</p>
   </section>
 </div>
-<script>
-(function(){
-  const catalog=[
-    {brand:'Xiaomi',code:'25100RA69G',model:'Redmi Note 15 5G',info:'Código técnico Xiaomi · 5G'},
-    {brand:'Xiaomi',code:'2312DRA50G',model:'Redmi Note 13 Pro 5G',info:'Código técnico Xiaomi · 5G'},
-    {brand:'Xiaomi',code:'2312DRAABG',model:'Redmi Note 13 Pro+ 5G',info:'Código técnico Xiaomi · 5G'},
-    {brand:'Xiaomi',code:'22101316UG',model:'Redmi Note 12 Pro+ 5G',info:'Código técnico Xiaomi · 5G'},
-    {brand:'Xiaomi',code:'2201116SG',model:'Redmi Note 11 Pro 5G',info:'Código técnico Xiaomi · 5G'},
-    {brand:'Samsung',code:'SM-A155M',model:'Galaxy A15',info:'Samsung · 4G'},
-    {brand:'Samsung',code:'SM-A156M',model:'Galaxy A15 5G',info:'Samsung · 5G'},
-    {brand:'Samsung',code:'SM-A145M',model:'Galaxy A14',info:'Samsung · 4G'},
-    {brand:'Samsung',code:'SM-A146M',model:'Galaxy A14 5G',info:'Samsung · 5G'},
-    {brand:'Samsung',code:'SM-A055M',model:'Galaxy A05',info:'Samsung'},
-    {brand:'Samsung',code:'SM-A057M',model:'Galaxy A05s',info:'Samsung'},
-    {brand:'Samsung',code:'SM-A245M',model:'Galaxy A24',info:'Samsung'},
-    {brand:'Samsung',code:'SM-A346M',model:'Galaxy A34 5G',info:'Samsung · 5G'},
-    {brand:'Samsung',code:'SM-A546E',model:'Galaxy A54 5G',info:'Samsung · 5G'},
-    {brand:'Samsung',code:'SM-A736B',model:'Galaxy A73 5G',info:'Samsung · 5G'},
-    {brand:'Samsung',code:'SM-G991B',model:'Galaxy S21 5G',info:'Samsung · linha S'},
-    {brand:'Samsung',code:'SM-S918B',model:'Galaxy S23 Ultra',info:'Samsung · linha S'},
-    {brand:'Samsung',code:'SM-S921B',model:'Galaxy S24',info:'Samsung · linha S'},
-    {brand:'Samsung',code:'SM-S928B',model:'Galaxy S24 Ultra',info:'Samsung · linha S'},
-    {brand:'Motorola',code:'XT-2341-1',model:'Moto G54 5G',info:'Motorola · 5G'},
-    {brand:'Motorola',code:'XT-2313-5',model:'Moto G53 5G',info:'Motorola · 5G'},
-    {brand:'Motorola',code:'XT-2331-2',model:'Moto G84 5G',info:'Motorola · 5G'},
-    {brand:'Motorola',code:'XT-2205-1',model:'Moto G62 5G',info:'Motorola · 5G'},
-    {brand:'Motorola',code:'XT-2163-4',model:'Moto G22',info:'Motorola'},
-    {brand:'Apple',code:'A2111',model:'iPhone 11',info:'Apple'},
-    {brand:'Apple',code:'A2221',model:'iPhone 11 Pro',info:'Apple'},
-    {brand:'Apple',code:'A2633',model:'iPhone 13',info:'Apple'},
-    {brand:'Apple',code:'A2890',model:'iPhone 14 Pro Max',info:'Apple'},
-    {brand:'Apple',code:'A3094',model:'iPhone 15',info:'Apple'},
-    {brand:'Realme',code:'RMX3710',model:'realme C55',info:'realme'},
-    {brand:'Realme',code:'RMX3630',model:'realme C35',info:'realme'}
-  ];
-  const norm=v=>String(v||'').toUpperCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^A-Z0-9]/g,'');
-  const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function brands(){const s=document.getElementById('deviceSearchBrand');if(!s||s.options.length>1)return;[...new Set(catalog.map(x=>x.brand))].sort().forEach(b=>s.add(new Option(b,b)))}
-  window.abrirPesquisaAparelho=function(){brands();const m=document.getElementById('deviceSearchModal');m.style.display='flex';document.getElementById('deviceSearchQuery').focus();pesquisarCatalogoAparelho()};
-  window.fecharPesquisaAparelho=function(){document.getElementById('deviceSearchModal').style.display='none'};
-  window.pesquisarCatalogoAparelho=function(showAll){const q=norm(document.getElementById('deviceSearchQuery').value);const b=document.getElementById('deviceSearchBrand').value;const out=document.getElementById('deviceSearchResults');const link=document.getElementById('deviceSearchWeb');const found=catalog.filter(x=>(!b||x.brand===b)&&(showAll||!q||[x.brand,x.code,x.model].some(v=>norm(v).includes(q)))).slice(0,30);if(q)link.href='https://www.google.com/search?q='+encodeURIComponent(q+' celular modelo codigo');else link.href='#';out.innerHTML=found.length?found.map(x=>'<article class="device-result"><div><strong>'+esc(x.brand+' '+x.model)+'</strong><small>Código: '+esc(x.code)+' · '+esc(x.info)+'</small></div><button type="button" onclick="usarAparelhoNaOS(\''+esc(x.code)+'\')">Usar na OS</button></article>').join(''):'<div class="device-empty">Nenhum modelo encontrado. Use “Pesquisar na internet” para consultar outros códigos.</div>'};
-  window.usarAparelhoNaOS=function(code){const x=catalog.find(item=>item.code===code);if(!x)return;const input=document.getElementById('deviceModel');if(typeof abrirModalOS==='function')abrirModalOS();if(input){input.value=x.brand+' '+x.model;input.dataset.deviceCode=x.code;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus()}fecharPesquisaAparelho();if(typeof avisar==='function')avisar(x.brand+' '+x.model+' preenchido na OS.')};
-  window.avisarPesquisaFoto=function(){if(typeof avisar==='function')avisar('A foto foi selecionada. Use o código técnico para confirmar o modelo com segurança.');else alert('Use o código técnico para confirmar o modelo com segurança.')};
-  document.addEventListener('DOMContentLoaded',function(){const bar=document.querySelector('.action-bar');if(bar&&!document.getElementById('deviceSearchButton')){const b=document.createElement('button');b.id='deviceSearchButton';b.type='button';b.className='btn-search-action';b.innerHTML='🔎 <span>Pesquisar modelo</span>';b.onclick=abrirPesquisaAparelho;bar.appendChild(b)}});
-})();
-</script>
+
+<script src="pesquisa-aparelhos.js?v=2"></script>
+
 
 </body>
 </html>
