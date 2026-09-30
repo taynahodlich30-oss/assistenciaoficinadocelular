@@ -20,6 +20,9 @@ try {
     console.error("Erro Firebase:", e);
 }
 
+const _fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+function formatarBRL(valor) { return _fmtBRL.format(Number(valor) || 0); }
+
 let ordensServico = [];
 let estoquePecas = [];
 let servicosAvulsos = [];
@@ -294,7 +297,7 @@ function renderizarEstoque() {
         div.innerHTML = `
             <div>
                 <strong class="stock-name">${item.nome}</strong><br>
-                <small>Fornecedor: <b class="stock-supplier">${item.fornecedor || 'Não especificado'}</b> | Qtd: ${item.qtd} un | R$ ${item.custo.toFixed(2)}</small>
+                <small>Fornecedor: <b class="stock-supplier">${item.fornecedor || 'Não especificado'}</b> | Qtd: ${item.qtd} un | ${formatarBRL(item.custo)}</small>
             </div>
             ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#alert"></use></svg> Baixo</span>' : ''}
         `;
@@ -491,10 +494,10 @@ function atualizarPainel() {
     document.getElementById('countReparo').innerText = reparo;
     document.getElementById('countProntos').innerText = prontos;
 
-    document.getElementById('totalBruto').innerText = `R$ ${bruto.toFixed(2)}`;
-    document.getElementById('totalRecebido').innerText = `R$ ${recebido.toFixed(2)}`;
-    document.getElementById('totalCusto').innerText = `R$ ${custo.toFixed(2)}`;
-    document.getElementById('totalLucro').innerText = `R$ ${(recebido - custo).toFixed(2)}`;
+    document.getElementById('totalBruto').innerText = `${formatarBRL(bruto)}`;
+    document.getElementById('totalRecebido').innerText = `${formatarBRL(recebido)}`;
+    document.getElementById('totalCusto').innerText = `${formatarBRL(custo)}`;
+    document.getElementById('totalLucro').innerText = `${formatarBRL((recebido - custo))}`;
 
     const termo = document.getElementById('searchInput').value.trim().toLocaleLowerCase('pt-BR');
     const pagamento = document.getElementById('paymentFilter').value;
@@ -532,6 +535,7 @@ function atualizarPainel() {
 
         const card = document.createElement('div');
         card.className = 'os-card';
+        card.dataset.status = os.status || '';
         card.innerHTML = `
             <div class="os-card-header">
                 <div class="os-identity"><span class="os-code">${escaparHtml(os.idOS)}</span><strong>${escaparHtml(os.cliente)}</strong></div>
@@ -542,13 +546,13 @@ function atualizarPainel() {
                     <option value="Pronto" ${os.status === 'Pronto' ? 'selected' : ''}>Pronto</option>
                 </select>
             </div>
-            <div class="os-card-main"><div><span class="os-overline">APARELHO</span><strong>${escaparHtml(os.modelo)}</strong></div><div><span class="os-overline">DEFEITO INFORMADO</span><strong>${escaparHtml(os.defeito)}</strong></div><div class="os-card-price"><span class="os-overline">VALOR DA OS</span><strong>R$ ${Number(os.valor || 0).toFixed(2)}</strong></div></div>
-            <div class="os-card-badges"><span class="payment-badge ${classePagamento}">${escaparHtml(os.statusPagamento || 'Aguardando')}</span><span>Recebido: R$ ${valorEfetivamenteRecebido(os).toFixed(2)}</span></div>
+            <div class="os-card-main"><div><span class="os-overline">APARELHO</span><strong>${escaparHtml(os.modelo)}</strong></div><div><span class="os-overline">DEFEITO INFORMADO</span><strong>${escaparHtml(os.defeito)}</strong></div><div class="os-card-price"><span class="os-overline">VALOR DA OS</span><strong>${formatarBRL(Number(os.valor || 0))}</strong></div></div>
+            <div class="os-card-badges"><span class="payment-badge ${classePagamento}">${escaparHtml(os.statusPagamento || 'Aguardando')}</span><span>Recebido: ${formatarBRL(valorEfetivamenteRecebido(os))}</span></div>
             <details class="os-card-details"><summary>Ver detalhes do aparelho</summary><div class="os-card-details-body">
                 <p><strong>IMEI / Série:</strong> ${escaparHtml(os.imei)}</p>
                 <p><strong>Componentes trocados:</strong> ${escaparHtml(os.pecasTrocadas || 'Nenhum registrado')}</p>
                 <p><strong>Descrição do serviço:</strong> ${escaparHtml(os.descricaoServico || 'Sem detalhes')}</p>
-                <p><strong>Fornecedor:</strong> ${escaparHtml(os.fornecedorPeca || 'Não informado')} · <strong>Custo da peça:</strong> R$ ${Number(os.custoPeca || 0).toFixed(2)}</p>
+                <p><strong>Fornecedor:</strong> ${escaparHtml(os.fornecedorPeca || 'Não informado')} · <strong>Custo da peça:</strong> ${formatarBRL(Number(os.custoPeca || 0))}</p>
                 ${os.detalhesPagamento ? `<p><strong>Pagamento:</strong> ${escaparHtml(os.detalhesPagamento)}</p>` : ''}
                 ${fotosHTML}
             </div></details>
@@ -717,7 +721,7 @@ async function waEnviarComprovante(osId) {
 
     let statusPagamentoTexto = "🟡 AGUARDANDO PAGAMENTO";
     if (os.statusPagamento === "Pago") {
-        statusPagamentoTexto = `🟢 PAGO (R$ ${os.valor.toFixed(2)})`;
+        statusPagamentoTexto = `🟢 PAGO (${formatarBRL(os.valor)})`;
     } else if (os.statusPagamento === "Parcial (Entrada/Resta)") {
         statusPagamentoTexto = `🔵 PARCIAL ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}`;
     }
@@ -729,7 +733,7 @@ async function waEnviarComprovante(osId) {
     texto += `📱 *Aparelho:* ${os.modelo}\n`;
     texto += `🔧 *Defeito Relatado:* ${os.defeito}\n`;
     texto += `⚙️ *Componente(s) Trocado(s):* ${os.pecasTrocadas || 'Reparo Efetuado'}\n`;
-    texto += `💰 *Valor Total:* R$ ${os.valor.toFixed(2)}\n`;
+    texto += `💰 *Valor Total:* ${formatarBRL(os.valor)}\n`;
     texto += `💳 *Status do Pagamento:* ${statusPagamentoTexto}\n\n`;
     texto += `------------------------------------\n`;
     texto += `🛡️ *TERMO DE GARANTIA DIGITAL (90 DIAS)*\n`;
@@ -746,7 +750,7 @@ function waPronto(telefone, osId, modelo, valor) {
     const linkAvaliacao = "https://share.google/fCGo2AkH2HVhHMzSP";
     
     const msg = encodeURIComponent(
-        `Olá! Seu *${modelo}* (${osId}) já está pronto para retirada. Valor: *R$ ${parseFloat(valor).toFixed(2)}*. Aguardamos você!\n\n` +
+        `Olá! Seu *${modelo}* (${osId}) já está pronto para retirada. Valor: *${formatarBRL(parseFloat(valor))}*. Aguardamos você!\n\n` +
         `Se puder dedicar 1 minutinho para avaliar o nosso atendimento no Google, nos ajuda muito: ${linkAvaliacao}`
     );
     
@@ -928,9 +932,9 @@ function abrirModalRelatorio() {
 
     let avg = ordensServico.length > 0 ? (ordensServico.reduce((total, os) => total + Number(os.valor || 0), 0) / ordensServico.length) : 0;
 
-    document.getElementById('reportMonthLucro').innerText = `R$ ${lucroTotal.toFixed(2)}`;
+    document.getElementById('reportMonthLucro').innerText = `${formatarBRL(lucroTotal)}`;
     document.getElementById('reportTopModel').innerText = modeloMaisAtendido;
-    document.getElementById('reportTicketAvg').innerText = `R$ ${avg.toFixed(2)}`;
+    document.getElementById('reportTicketAvg').innerText = `${formatarBRL(avg)}`;
 }
 
 function fecharModalRelatorio() { document.getElementById('reportModal').style.display = 'none'; }
@@ -1092,7 +1096,7 @@ function imprimirCupom(osId) {
             <p style="font-size: 12px; margin: 2px 0;"><strong>Fornecedor:</strong> ${os.fornecedorPeca || 'N/A'}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Pagamento:</strong> ${os.statusPagamento || 'Aguardando'} ${os.detalhesPagamento ? `(${os.detalhesPagamento})` : ''}</p>
             <p style="font-size: 12px; margin: 2px 0;"><strong>Obs/Riscos:</strong> ${os.obs}</p>
-            <p style="font-size: 13px; margin: 5px 0;"><strong>Valor Total:</strong> R$ ${os.valor.toFixed(2)}</p>
+            <p style="font-size: 13px; margin: 5px 0;"><strong>Valor Total:</strong> ${formatarBRL(os.valor)}</p>
             
             <hr style="border-top: 1px dashed #000; margin: 8px 0;">
             

@@ -146,7 +146,7 @@
             #printSection { display: block !important; position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 5px; }
         }
     </style>
-    <link rel="stylesheet" href="redesign.css?v=4">
+    <link rel="stylesheet" href="redesign.css?v=5">
 </head>
 <body>
 
@@ -204,6 +204,14 @@
                 <div class="metric-card" role="button" aria-pressed="false" tabindex="0" onclick="filtrarPorStatus('Pronto')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorStatus('Pronto')}" id="cardFilterProntos"><span class="metric-top"><span class="metric-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#check"></use></svg></span><span class="metric-number">05 / 05</span></span><span class="metric-value" id="countProntos">0</span><span class="metric-label">Prontos</span></div>
             </section>
 
+            <div class="dashboard-section-title" id="toolsSection"><div><div class="section-kicker">FINANCEIRO</div><h2>Resumo financeiro</h2></div><span>Soma de todas as ordens cadastradas</span></div>
+            <section class="financial-grid">
+                <div class="fin-card"><span class="fin-value fin-bruto" id="totalBruto">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#receipt"></use></svg> Total cobrado</span></div>
+                <div class="fin-card"><span class="fin-value fin-lucro" id="totalRecebido">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#wallet"></use></svg> Total recebido</span></div>
+                <div class="fin-card"><span class="fin-value fin-custo" id="totalCusto">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#package"></use></svg> Custo de peças</span></div>
+                <div class="fin-card"><span class="fin-value fin-lucro" id="totalLucro">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#trend"></use></svg> Recebido menos peças</span></div>
+            </section>
+
             <div id="ordersSection" class="list-heading"><div><div class="section-kicker">ATENDIMENTOS</div><h2>Ordens de serviço</h2></div><p>Encontre e acompanhe os aparelhos da oficina.</p></div>
             <div class="search-container">
                 <label class="search-label" for="searchInput">Encontre uma ordem rapidamente</label>
@@ -223,15 +231,9 @@
 
             <section id="osList" class="os-list"></section>
 
-            <div class="dashboard-section-title" id="toolsSection"><div><div class="section-kicker">SUA OFICINA</div><h2>Finanças e ferramentas</h2></div></div>
-            <section class="financial-grid">
-                <div class="fin-card"><span class="fin-value fin-bruto" id="totalBruto">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#receipt"></use></svg> Total cobrado</span></div>
-                <div class="fin-card"><span class="fin-value fin-lucro" id="totalRecebido">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#wallet"></use></svg> Total recebido</span></div>
-                <div class="fin-card"><span class="fin-value fin-custo" id="totalCusto">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#package"></use></svg> Custo de peças</span></div>
-                <div class="fin-card"><span class="fin-value fin-lucro" id="totalLucro">R$ 0</span><span class="metric-label"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#trend"></use></svg> Recebido menos peças</span></div>
-            </section>
+            
 
-            <div class="section-kicker">ACESSO RÁPIDO</div>
+            <div class="dashboard-section-title" id="toolsSection"><div><div class="section-kicker">ACESSO RÁPIDO</div><h2>Ferramentas</h2></div></div>
             <div class="action-bar">
                 <button class="btn-main-action" onclick="abrirModalOS()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#plus"></use></svg></span><span>Nova OS</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=4#arrow"></use></svg></button>
                 <button class="btn-stock-action" onclick="abrirModalEstoque()"><span class="action-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#package"></use></svg></span><span>Peças e preços</span><svg class="ui-icon action-arrow" aria-hidden="true"><use href="icons.svg?v=4#arrow"></use></svg></button>
@@ -504,7 +506,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="script.js?v=4"></script>
+    <script src="script.js?v=5"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
@@ -522,7 +524,7 @@
 
 <!-- Pesquisa inteligente de aparelhos - Oficina do Celular -->
 <style>
-.btn-search-action{background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;padding:12px 6px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px}
+.btn-search-action{padding:12px 6px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px}
 .device-search-overlay{position:fixed;inset:0;background:rgba(2,6,23,.86);z-index:1200;display:none;align-items:flex-end;justify-content:center;padding:0}
 .device-search-card{width:100%;max-width:720px;max-height:92vh;overflow:auto;background:#162238;border:1px solid #334155;border-bottom:0;border-radius:22px 22px 0 0;padding:20px;box-shadow:0 -20px 60px rgba(0,0,0,.48)}
 .device-search-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.device-search-head h3{font-size:18px;color:#fff}.device-search-sub{font-size:12px;color:#94a3b8;margin-bottom:15px}

@@ -457,3 +457,76 @@ input:focus,select:focus,textarea:focus { border-color: #9ce9ab; box-shadow: 0 0
  .os-card-actions { grid-template-columns: 1fr 1fr; }
  .os-card-actions .btn-sm:last-child { grid-column: 1 / -1; }
 }
+
+/* ===== Acabamento visual v5 ===== */
+:root {
+  --st-analise: #7dd3fc;
+  --st-orcamento: #fbbf24;
+  --st-reparo: #c4a1ff;
+  --st-pronto: #6ee7a0;
+}
+.metric-value, .fin-value, .os-card-price strong, .os-code { font-variant-numeric: tabular-nums; }
+
+/* Métricas: 5 colunas no desktop, com cor por etapa */
+@media (min-width: 1100px) { .dashboard-main .metrics-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.metric-card { --st: #9ef4ac; }
+#cardFilterAnalise { --st: var(--st-analise); }
+#cardFilterOrcamento { --st: var(--st-orcamento); }
+#cardFilterReparo { --st: var(--st-reparo); }
+#cardFilterProntos { --st: var(--st-pronto); }
+.metric-card .metric-icon { color: var(--st); background: color-mix(in srgb, var(--st) 14%, transparent); border-color: color-mix(in srgb, var(--st) 35%, transparent); }
+.metric-card .metric-value { color: #f3fbf5; font-size: 30px; letter-spacing: -.03em; }
+.metric-card.active { border-color: var(--st); box-shadow: inset 0 0 0 1px var(--st), 0 12px 26px #0005; }
+.metric-card::before { content: ''; position: absolute; left: 16px; right: 16px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--st); opacity: .55; }
+.metric-card.active::before { opacity: 1; }
+
+/* Cartões de OS com cor da etapa */
+.os-card { --st: #72dca0; border-left: 4px solid var(--st); transition: border-color .2s, box-shadow .2s, transform .2s; }
+.os-card[data-status="Em análise"] { --st: var(--st-analise); }
+.os-card[data-status="Em orçamento"] { --st: var(--st-orcamento); }
+.os-card[data-status="Em reparo"] { --st: var(--st-reparo); }
+.os-card[data-status="Pronto"] { --st: var(--st-pronto); }
+.os-card:hover { box-shadow: 0 18px 40px #0006, inset 0 0 0 1px color-mix(in srgb, var(--st) 25%, transparent); }
+.os-card .status-select { color: var(--st); border-color: color-mix(in srgb, var(--st) 55%, transparent); background-color: color-mix(in srgb, var(--st) 10%, #111b15); }
+.os-card-header strong { font-size: 17px; letter-spacing: -.02em; }
+.os-card-price strong { font-size: 20px; }
+.os-list { display: grid; gap: 14px; }
+.os-list .os-card { margin-bottom: 0; }
+@media (min-width: 1250px) { .os-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } .os-list .os-card-main { grid-template-columns: 1fr 1fr; } .os-list .os-card-price { grid-column: 1 / -1; } .os-list > .empty-state { grid-column: 1 / -1; } }
+
+/* Selo de pagamento */
+.payment-badge { border: 1px solid transparent; border-radius: 999px; padding: 4px 10px; }
+.payment-paid { background: #1d4a2e; color: #b8f5c9; border-color: #3f8a5a; }
+.payment-pending { background: #4a2f1d; color: #ffd2a8; border-color: #8a5a3a; }
+.payment-partial { background: #1d3550; color: #bfe0ff; border-color: #3d6c99; }
+
+/* Financeiro: cores de acordo com o tipo de valor */
+.financial-grid { margin-bottom: 26px; }
+.fin-card { --fc: #9ef4ac; }
+.fin-card:has(.fin-bruto) { --fc: #8fd8ff; }
+.fin-card:has(.fin-custo) { --fc: #ffa3a3; }
+.fin-card::before { background: var(--fc) !important; }
+.fin-card .fin-value { font-size: clamp(18px, 2vw, 24px); letter-spacing: -.03em; }
+.fin-bruto { color: #8fd8ff !important; }
+.fin-custo { color: #ffa3a3 !important; }
+.fin-lucro { color: #9ef4ac !important; }
+
+/* Botão de pesquisa no mesmo estilo dos outros atalhos */
+.action-bar .btn-search-action { min-height: 46px; border-radius: 14px; border: 1px solid #3a5a45; background: linear-gradient(145deg,#1f3025,#131d17); color: #e6f8ea; font-weight: 700; box-shadow: 0 10px 22px #0004, inset 0 1px #ffffff12; }
+.action-bar .btn-search-action:hover { border-color: #8cdea1; }
+
+/* Seções mais arejadas */
+.dashboard-section-title, .list-heading { margin-top: 30px; }
+.hero-panel + .dashboard-section-title { margin-top: 22px; }
+
+/* Celular: métricas em grade, sem cortar na lateral */
+@media (max-width: 700px) {
+  .dashboard-main .metrics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; margin-right: 0; padding: 0; }
+  .dashboard-main .metrics-grid .metric-card { min-height: 96px; }
+  .dashboard-main .metrics-grid #cardFilterTodos { grid-column: 1 / -1; }
+  .metric-card .metric-value { font-size: 26px; }
+  .financial-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .fin-card { min-height: 92px; padding: 14px; }
+  .fin-card .fin-value { font-size: 17px; }
+  .dashboard-section-title, .list-heading { margin-top: 24px; }
+}

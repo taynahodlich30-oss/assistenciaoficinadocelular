@@ -1,12 +1,12 @@
-const CACHE_NAME = 'oficina-os-cache-v9-usabilidade';
+const CACHE_NAME = 'oficina-os-cache-v10-visual';
 const urlsToCache = [
   'index.html',
   'style.css',
-  'redesign.css?v=4',
+  'redesign.css?v=5',
   'icons.svg?v=4',
   'app-icon-192.png',
   'app-icon-512.png',
-  'script.js?v=4',
+  'script.js?v=5',
   'garantia.html',
   'garantia.js',
   'manifest.json?v=4'
