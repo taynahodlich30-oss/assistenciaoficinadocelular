@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Acompanhe seu reparo | Oficina do Celular</title>
+<meta name="theme-color" content="#0b1210">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0b1210; --surface:#121b18; --surface-2:#17221e; --line:#243530; --line-strong:#33483f; --text:#edf5f0; --text-2:#b9cbc1; --muted:#86a093; --accent:#7ee2a8; --ink:#062a18;
+  --st-analise:#7dd3fc; --st-orcamento:#fbbf24; --st-reparo:#c4a1ff; --st-pronto:#6ee7a0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { min-height: 100vh; background: radial-gradient(800px 420px at 80% -10%, #173a2a 0, transparent 60%), var(--bg); color: var(--text); font: 15px/1.5 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; padding: 24px 16px 40px; -webkit-font-smoothing: antialiased; }
+main { max-width: 520px; margin: 0 auto; }
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+.brand-glyph { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(150deg,#a7f3c7,#4fcf8a); color: var(--ink); }
+.brand strong { display: block; font-size: 15px; }
+.brand small { color: var(--muted); font-size: 12px; }
+svg.i { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 22px; box-shadow: 0 24px 64px #000000a0; }
+h1 { font-size: 22px; letter-spacing: -.02em; margin-bottom: 4px; }
+.sub { color: var(--muted); font-size: 13.5px; }
+.status { --st: var(--accent); margin: 20px 0; padding: 16px; border-radius: 14px; background: color-mix(in srgb, var(--st) 12%, transparent); border: 1px solid color-mix(in srgb, var(--st) 35%, transparent); }
+.status b { display: flex; align-items: center; gap: 8px; color: var(--st); font-size: 17px; }
+.status b::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+.status p { color: var(--text-2); font-size: 14px; margin-top: 4px; }
+.steps { list-style: none; margin: 6px 0 4px; }
+.step { position: relative; display: flex; gap: 14px; padding-bottom: 18px; }
+.step:last-child { padding-bottom: 0; }
+.step::before { content: ''; position: absolute; left: 7px; top: 18px; bottom: 0; width: 2px; background: var(--line-strong); }
+.step:last-child::before { display: none; }
+.dot { flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: 50%; border: 2px solid var(--line-strong); background: var(--surface); position: relative; z-index: 1; }
+.step.done .dot { background: var(--accent); border-color: var(--accent); }
+.step.done::before { background: var(--accent); opacity: .5; }
+.step.current .dot { border-color: var(--accent); box-shadow: 0 0 0 4px #7ee2a82e; }
+.step span { display: flex; flex-direction: column; }
+.step span b { font-size: 14px; }
+.step span small { color: var(--muted); font-size: 12.5px; }
+.step:not(.done):not(.current) span b { color: var(--muted); font-weight: 600; }
+.money { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+.money div { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.money small { display: block; color: var(--muted); font-size: 12px; }
+.money strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.foot { margin-top: 18px; color: var(--muted); font-size: 12px; text-align: center; }
+.msg { color: var(--text-2); }
+form { margin-top: 16px; }
+label { display: block; font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: #0e1613; color: var(--text); font: inherit; }
+button { width: 100%; margin-top: 10px; padding: 12px; border: 0; border-radius: 10px; background: var(--accent); color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><span class="brand-glyph"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M12 18h.01"/></svg></span><div><strong>Oficina do Celular</strong><small>Acompanhamento do reparo</small></div></div>
+  <section class="card" id="app" aria-live="polite"><p class="msg">Carregando...</p></section>
+  <p class="foot">Esta página é atualizada pela oficina sempre que o serviço muda de etapa.</p>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  var firebaseConfig = {
+    apiKey: 'AIzaSyDDLsDkCsFma4xWIpSfwE58w3zSUNuv9Bc',
+    authDomain: 'oficina-do-celular-eaaed.firebaseapp.com',
+    projectId: 'oficina-do-celular-eaaed',
+    storageBucket: 'oficina-do-celular-eaaed.firebasestorage.app',
+    messagingSenderId: '32431619085',
+    appId: '1:32431619085:web:18b3a2defb79795f832944'
+  };
+  var app = document.getElementById('app');
+  var ETAPAS = ['Em análise', 'Em orçamento', 'Em reparo', 'Pronto'];
+  var CORES = { 'Em análise': '--st-analise', 'Em orçamento': '--st-orcamento', 'Em reparo': '--st-reparo', 'Pronto': '--st-pronto' };
+  var MENSAGENS = {
+    'Em análise': 'O técnico está avaliando o seu aparelho.',
+    'Em orçamento': 'O orçamento foi enviado. Estamos aguardando a sua aprovação.',
+    'Em reparo': 'O reparo está em andamento.',
+    'Pronto': 'Seu aparelho está pronto para retirada!'
+  };
+
+  function el(tag, classe, texto) {
+    var e = document.createElement(tag);
+    if (classe) e.className = classe;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
+  }
+  function dinheiro(v) { return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+  function quando(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+  function token(entrada) {
+    var codigo = String(entrada || '').trim();
+    if (/^https?:\/\//i.test(codigo)) {
+      try { codigo = new URL(codigo).searchParams.get('c') || ''; } catch (e) { return ''; }
+    }
+    if (/^[0-9a-f]{48}$/.test(codigo)) return codigo;
+    if (!/^[A-Za-z0-9_-]{32}$/.test(codigo)) return '';
+    try {
+      var bytes = atob(codigo.replace(/-/g, '+').replace(/_/g, '/'));
+      if (bytes.length !== 24) return '';
+      return Array.from(bytes, function (c) { return c.charCodeAt(0).toString(16).padStart(2, '0'); }).join('');
+    } catch (e) { return ''; }
+  }
+  function mensagem(titulo, texto, comFormulario) {
+    app.replaceChildren();
+    app.appendChild(el('h1', '', titulo));
+    app.appendChild(el('p', 'sub', texto));
+    if (comFormulario) {
+      var form = el('form');
+      var label = el('label', '', 'Link ou código recebido');
+      label.htmlFor = 'codigo';
+      var input = el('input'); input.id = 'codigo'; input.autocomplete = 'off'; input.placeholder = 'Cole aqui o link enviado pela oficina';
+      var botao = el('button', '', 'Consultar'); botao.type = 'submit';
+      form.append(label, input, botao);
+      form.addEventListener('submit', function (e) { e.preventDefault(); consultar(input.value); });
+      app.appendChild(form);
+    }
+  }
+  function mostrar(d) {
+    app.replaceChildren();
+    app.appendChild(el('h1', '', d.modelo || 'Seu aparelho'));
+    app.appendChild(el('p', 'sub', (d.idOS || '') + (d.cliente ? ' · ' + d.cliente : '') + (d.defeito ? ' · ' + d.defeito : '')));
+
+    var status = el('div', 'status');
+    status.style.setProperty('--st', 'var(' + (CORES[d.status] || '--accent') + ')');
+    status.appendChild(el('b', '', d.status || 'Recebido'));
+    status.appendChild(el('p', '', MENSAGENS[d.status] || 'Recebemos o seu aparelho.'));
+    app.appendChild(status);
+
+    var etapas = Array.isArray(d.etapas) ? d.etapas : [];
+    function dataDe(nome) {
+      for (var i = etapas.length - 1; i >= 0; i--) if (etapas[i].status === nome) return etapas[i].data;
+      return '';
+    }
+    var atual = ETAPAS.indexOf(d.status);
+    var lista = el('ol', 'steps');
+    var recebido = el('li', 'step done');
+    var r = el('span'); r.append(el('b', '', 'Aparelho recebido'), el('small', '', d.entrada ? 'Em ' + d.entrada : ''));
+    recebido.append(el('i', 'dot'), r);
+    lista.appendChild(recebido);
+    ETAPAS.forEach(function (nome, i) {
+      var classe = i < atual ? 'step done' : (i === atual ? 'step current' : 'step');
+      var li = el('li', classe);
+      var texto = el('span');
+      var data = dataDe(nome);
+      texto.append(el('b', '', nome === 'Pronto' ? 'Pronto para retirada' : nome), el('small', '', data ? quando(data) : (i === atual ? 'Etapa atual' : (i > atual ? 'Aguardando' : ''))));
+      li.append(el('i', 'dot'), texto);
+      lista.appendChild(li);
+    });
+    app.appendChild(lista);
+
+    if (Number(d.valor) > 0) {
+      var money = el('div', 'money');
+      var a = el('div'); a.append(el('small', '', 'Valor do serviço'), el('strong', '', dinheiro(d.valor)));
+      var b = el('div'); b.append(el('small', '', 'Falta pagar'), el('strong', '', dinheiro(d.restante)));
+      money.append(a, b);
+      app.appendChild(money);
+    }
+    if (d.atualizadoEm) app.appendChild(el('p', 'foot', 'Última atualização: ' + quando(d.atualizadoEm)));
+  }
+
+  var banco = null;
+  try { firebase.initializeApp(firebaseConfig); banco = firebase.firestore(); } catch (e) { banco = null; }
+
+  function consultar(entrada) {
+    var codigo = token(entrada);
+    if (!codigo) { mensagem('Link inválido', 'Confira o link enviado pela oficina no WhatsApp.', true); return; }
+    if (!banco) { mensagem('Consulta indisponível', 'Tente novamente em alguns minutos.', false); return; }
+    app.replaceChildren(el('p', 'msg', 'Consultando...'));
+    banco.collection('garantias_publicas').doc(codigo).get().then(function (snap) {
+      var dados = snap.exists ? snap.data() : null;
+      if (!dados || dados.tipo !== 'acompanhamento') { mensagem('Reparo não encontrado', 'Este link não está mais ativo. Fale com a oficina para receber um novo.', true); return; }
+      mostrar(dados);
+    }).catch(function () {
+      mensagem('Não foi possível consultar agora', 'Verifique sua conexão e tente novamente.', false);
+    });
+  }
+
+  var inicial = new URLSearchParams(location.search).get('c');
+  if (inicial) consultar(inicial);
+  else mensagem('Acompanhe seu reparo', 'Use o link que a oficina enviou pelo WhatsApp.', true);
+})();
+</script>
+</body>
+</html>

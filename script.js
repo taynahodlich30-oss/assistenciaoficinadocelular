@@ -112,7 +112,7 @@ function exibirApp() {
 let temporizadorAviso = null;
 function avisar(mensagem, erro = false) {
     const aviso = document.getElementById('appNotice');
-    aviso.innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#${erro ? 'alert' : 'check'}"></use></svg><span></span>`;
+    aviso.innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=7#${erro ? 'alert' : 'check'}"></use></svg><span></span>`;
     aviso.querySelector('span').textContent = mensagem;
     aviso.classList.toggle('error', erro);
     aviso.style.display = 'flex';
@@ -151,13 +151,17 @@ function carregarLocal() {
 async function salvarNoBanco(novaOS) {
     if (!db || !auth?.currentUser) throw new Error('Sessão ou Firebase indisponível');
     const { idDoc, ...dados } = novaOS;
-    const refOS = idDoc ? db.collection('ordens_servico').doc(idDoc) : db.collection('ordens_servico').doc();
+    const refOS = idDoc ? db.collection('ordens_servico').doc(idDoc) : db.collection('ordens_servico').doc(dados.idOS);
     const antigo = idDoc ? ordensServico.find(os => os.idDoc === idDoc) : null;
     const antigoId = antigo?.estoquePecaId || '';
     const novoId = dados.estoquePecaId || '';
     let estoqueAtualizado = {};
     await db.runTransaction(async transacao => {
         estoqueAtualizado = {};
+        if (!idDoc) {
+            const existente = await transacao.get(refOS);
+            if (existente.exists) throw new Error('OS_DUPLICADA');
+        }
         if (antigoId !== novoId) {
             const ids = [...new Set([antigoId, novoId].filter(Boolean))];
             const refs = ids.map(id => db.collection('estoque_pecas').doc(id));
@@ -198,6 +202,7 @@ async function excluirOS(osId) {
             if (!db || !item.idDoc) throw new Error('OS sem vínculo com Firebase');
             await db.collection('ordens_servico').doc(item.idDoc).delete();
         } catch(e) { avisar('Não foi possível excluir a OS no Firebase. Ela permanece na lista.', true); return; }
+        removerAcompanhamento(item);
         ordensServico.splice(index, 1);
         localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
         atualizarPainel();
@@ -307,7 +312,7 @@ function renderizarEstoque() {
                 <strong class="stock-name">${escaparHtml(item.nome)}</strong>
                 <small>${escaparHtml(item.fornecedor || 'Fornecedor não informado')} · ${Number(item.qtd || 0)} un · ${formatarBRL(item.custo)} cada</small>
             </div>
-            ${item.qtd <= 2 ? '<span class="stock-low"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#alert"></use></svg> Estoque baixo</span>' : ''}
+            ${item.qtd <= 2 ? '<span class="stock-low"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=7#alert"></use></svg> Estoque baixo</span>' : ''}
         `;
         list.appendChild(div);
     });
@@ -346,51 +351,64 @@ async function darBaixaEstoque(nomePeca) {
 }
 
 function verificarHistoricoCliente() {
-    const phone = document.getElementById('clientPhone').value.replace(/\D/g, '');
-    if (!phone) return;
-    const anteriores = ordensServico.filter(os => os.whatsapp.replace(/\D/g, '') === phone);
+    const phone = normalizarTelefone(document.getElementById('clientPhone').value);
     const alertBox = document.getElementById('clientHistoryAlert');
-    
+    if (!phone) { alertBox.textContent = ''; return; }
+    const anteriores = ordensServico
+        .filter(os => normalizarTelefone(os.whatsapp) === phone && os.idDoc !== document.getElementById('editDocId').value)
+        .sort((a, b) => (dataDaOS(b) || 0) - (dataDaOS(a) || 0));
     if (anteriores.length > 0) {
-        alertBox.innerText = `Cliente antigo! ${anteriores.length} OS anterior(es) encontrada(s).`;
+        const campoNome = document.getElementById('clientName');
+        if (!campoNome.value.trim() && anteriores[0].cliente) campoNome.value = anteriores[0].cliente;
+        alertBox.textContent = `Cliente já atendido: ${anteriores.length} ${anteriores.length === 1 ? 'OS anterior' : 'OS anteriores'}, a última em ${anteriores[0].data || '-'} (${anteriores[0].modelo || 'aparelho não informado'}).`;
     } else {
-        alertBox.innerText = `Novo cliente no sistema.`;
+        alertBox.textContent = 'Cliente novo.';
     }
 }
 
 async function alterarStatusOS(osId, novoStatus) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (os) {
+        if (os.status === novoStatus) return;
+        const historico = [...(Array.isArray(os.historico) ? os.historico : []), entradaHistorico(novoStatus)];
         try {
             if (!db || !os.idDoc) throw new Error('OS sem vínculo com Firebase');
-            await db.collection('ordens_servico').doc(os.idDoc).update({ status: novoStatus });
-        } catch(e) { avisar('Não foi possível salvar o novo status. Tente novamente.', true); atualizarPainel(); return; }
+            await db.collection('ordens_servico').doc(os.idDoc).update({ status: novoStatus, historico });
+        } catch(e) { avisar('Não foi possível salvar a nova etapa. Tente novamente.', true); atualizarPainel(); return; }
         os.status = novoStatus;
+        os.historico = historico;
+        sincronizarAcompanhamento(os);
         localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
         atualizarPainel();
         avisar(`${osId} agora está em "${novoStatus}".`);
     }
 }
 
-function previewImages(event) {
-    const files = event.target.files;
+async function previewImages(event) {
+    const todos = Array.from(event.target.files || []);
+    const arquivos = todos.slice(0, FOTOS_MAX);
     const container = document.getElementById('previewContainer');
     const versaoAtual = ++versaoPreviewOS;
     container.innerHTML = '';
     fotosTemp = [];
-
-    Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
+    if (todos.length > FOTOS_MAX) avisar(`Foram usadas só as ${FOTOS_MAX} primeiras fotos.`);
+    processandoFotos = arquivos.length > 0;
+    for (const arquivo of arquivos) {
+        try {
+            const foto = await comprimirImagem(arquivo);
             if (versaoAtual !== versaoPreviewOS) return;
-            fotosTemp.push(e.target.result);
+            fotosTemp.push(foto);
             const img = document.createElement('img');
-            img.src = e.target.result;
+            img.src = foto;
             img.className = 'preview-thumb';
+            img.alt = 'Foto de entrada';
             container.appendChild(img);
+        } catch (e) {
+            if (versaoAtual !== versaoPreviewOS) return;
+            avisar(`Não foi possível ler a foto ${arquivo.name}. Tente tirar a foto de novo.`, true);
         }
-        reader.readAsDataURL(file);
-    });
+    }
+    if (versaoAtual === versaoPreviewOS) processandoFotos = false;
 }
 
 async function salvarOS(event) {
@@ -403,7 +421,12 @@ async function salvarOS(event) {
 
     const docIdExistente = document.getElementById('editDocId').value;
     const osIdExistente = document.getElementById('editOSId').value;
-    const osNumber = osIdExistente || ("OS-" + Math.floor(100000 + Math.random() * 900000));
+    if (processandoFotos) {
+        document.getElementById('saveError').textContent = 'Aguarde as fotos terminarem de carregar.';
+        botaoSalvar.disabled = false;
+        return;
+    }
+    const osNumber = osIdExistente || proximoNumeroOS();
     
     const pecaUtilizada = document.getElementById('partSummary').textContent.trim() || ordensServico.find(o => o.idDoc === document.getElementById('editDocId').value)?.peca || 'Nenhuma';
     const fornecedorPeca = document.getElementById('partSupplier').value || "Não Informado";
@@ -412,11 +435,17 @@ async function salvarOS(event) {
     const pecaEstoque = indiceEstoque === '' ? null : estoquePecas[Number(indiceEstoque)];
 
     const osAnterior = ordensServico.find(os => os.idDoc === docIdExistente);
+    const statusNovo = document.getElementById('serviceStatus').value;
+    const agoraISO = new Date().toISOString();
+    const historicoOS = osAnterior ? [...(Array.isArray(osAnterior.historico) ? osAnterior.historico : [])] : [{ status: statusNovo, data: agoraISO }];
+    if (osAnterior && osAnterior.status !== statusNovo) historicoOS.push({ status: statusNovo, data: agoraISO });
     const novaOS = {
         ...(osAnterior || {}),
         ...(docIdExistente ? { idDoc: docIdExistente } : {}),
         idOS: osNumber,
         data: osAnterior?.data || new Date().toLocaleDateString('pt-BR'),
+        criadoEm: osAnterior ? (osAnterior.criadoEm || '') : agoraISO,
+        historico: historicoOS,
         cliente: document.getElementById('clientName').value,
         whatsapp: document.getElementById('clientPhone').value,
         modelo: document.getElementById('deviceModel').value,
@@ -454,15 +483,28 @@ async function salvarOS(event) {
         return;
     }
 
-    try {
-        await salvarNoBanco(novaOS);
-    } catch(e) {
-        document.getElementById('saveError').textContent = e.message?.includes('Peça') ? e.message : 'Não foi possível salvar no Firebase. A OS continua no formulário; verifique a internet e tente novamente.';
+    const tamanhoOS = tamanhoEmBytes(novaOS);
+    if (tamanhoOS > LIMITE_OS_BYTES) {
+        document.getElementById('saveError').textContent = `Esta OS ficou com ${formatarMB(tamanhoOS)} e o limite do Firebase é 1 MB. Use menos fotos de entrada e tente de novo.`;
+        irEtapaOS(1);
         botaoSalvar.disabled = false;
         return;
     }
+
+    for (let tentativa = 1; ; tentativa++) {
+        try {
+            await salvarNoBanco(novaOS);
+            break;
+        } catch(e) {
+            if (e.message === 'OS_DUPLICADA' && !osIdExistente && tentativa < 6) { novaOS.idOS = proximoNumeroOS(tentativa); continue; }
+            document.getElementById('saveError').textContent = e.message?.includes('Peça') ? e.message : 'Não foi possível salvar no Firebase. A OS continua no formulário; verifique a internet e tente novamente.';
+            botaoSalvar.disabled = false;
+            return;
+        }
+    }
+    sincronizarAcompanhamento(novaOS);
     botaoSalvar.disabled = false;
-    avisar(docIdExistente ? `${osNumber} atualizada.` : `${osNumber} criada com sucesso.`);
+    avisar(docIdExistente ? `${novaOS.idOS} atualizada.` : `${novaOS.idOS} criada com sucesso.`);
 
     fecharModalOS(true);
 }
@@ -480,7 +522,7 @@ function urlFotoSegura(valor) {
     } catch { return ''; }
 }
 
-const ICO = id => `<svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#${id}"></use></svg>`;
+const ICO = id => `<svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=7#${id}"></use></svg>`;
 function dataDaOS(os) {
     const [dia, mes, ano] = String(os?.data || '').split('/').map(Number);
     return ano ? new Date(ano, (mes || 1) - 1, dia || 1) : null;
@@ -495,15 +537,15 @@ function textoDias(n) { return n === 0 ? 'hoje' : n === 1 ? 'há 1 dia' : `há $
 function saldoAReceber(os) { return Math.max(0, Number(os.valor || 0) - valorEfetivamenteRecebido(os)); }
 
 function atualizarAtencao() {
-    const prontos = ordensServico.filter(os => os.status === 'Pronto');
+    const prontos = ordensServico.filter(os => os.status === 'Pronto' && !os.garantiaToken); // garantia enviada = aparelho entregue
     const orcamentos = ordensServico.filter(os => os.status === 'Em orçamento');
-    const parados = orcamentos.filter(os => diasDesde(os) >= 2);
+    const parados = orcamentos.filter(os => diasDesdeData(dataDaEtapa(os, 'Em orçamento')) >= 2);
     const pendentes = ordensServico.filter(os => os.statusPagamento !== 'Pago' && saldoAReceber(os) > 0);
     const aReceber = pendentes.reduce((s, os) => s + saldoAReceber(os), 0);
     const hojeTxt = new Date().toLocaleDateString('pt-BR');
     const deHoje = ordensServico.filter(os => os.data === hojeTxt).length;
     const semana = ordensServico.filter(os => dataDaOS(os) && diasDesde(os) < 7).length;
-    const maisAntigo = prontos.reduce((m, os) => Math.max(m, diasDesde(os)), 0);
+    const maisAntigo = prontos.reduce((m, os) => Math.max(m, diasDesdeData(dataDaEtapa(os, 'Pronto'))), 0);
 
     const definir = (id, valor, dica, alerta) => {
         document.getElementById(id).textContent = valor;
@@ -512,7 +554,7 @@ function atualizarAtencao() {
         card.classList.remove('is-loading');
         card.classList.toggle('has-alert', Boolean(alerta));
     };
-    definir('attReady', prontos.length, prontos.length ? `Mais antigo entrou ${textoDias(maisAntigo)}` : 'Nenhum aparelho esperando', prontos.length);
+    definir('attReady', prontos.length, prontos.length ? `Mais antigo está pronto ${textoDias(maisAntigo)}` : 'Nenhum aparelho esperando', prontos.length);
     definir('attQuotes', orcamentos.length, parados.length ? `${parados.length} parado${parados.length > 1 ? 's' : ''} há 2 dias ou mais` : orcamentos.length ? 'Todos recentes' : 'Nenhum orçamento pendente', parados.length);
     definir('attReceivable', formatarBRL(aReceber), pendentes.length ? `Em ${pendentes.length} ${pendentes.length === 1 ? 'ordem' : 'ordens'}` : 'Tudo recebido', false);
     definir('attToday', deHoje, `${semana} nos últimos 7 dias`, false);
@@ -610,12 +652,15 @@ function atualizarPainel() {
                     <div class="full"><dt>Descrição do serviço</dt><dd>${escaparHtml(os.descricaoServico || 'Sem detalhes')}</dd></div>
                     ${os.detalhesPagamento ? `<div class="full"><dt>Pagamento</dt><dd>${escaparHtml(os.detalhesPagamento)}</dd></div>` : ''}
                     ${fotosHTML}
+                    <div class="full"><dt>Linha do tempo</dt><dd>${linhaDoTempoHTML(os)}</dd></div>
                 </dl>
                 <div class="os-actions" style="margin-top:14px">
                     <button type="button" class="btn btn-secondary" data-os-action="editar">${ICO('edit')} Editar</button>
                     <button type="button" class="btn btn-wa" data-os-action="orcamento">${ICO('send')} Orçamento</button>
                     <button type="button" class="btn btn-wa" data-os-action="aprovado">${ICO('check')} Avisar aprovação</button>
                     <button type="button" class="btn btn-wa" data-os-action="pronto">${ICO('send')} Avisar pronto</button>
+                    <button type="button" class="btn btn-wa" data-os-action="acompanhamento">${ICO('link')} ${os.acompanhamentoToken ? 'Reenviar acompanhamento' : 'Enviar acompanhamento'}</button>
+                    ${os.acompanhamentoToken ? `<button type="button" class="btn btn-ghost" data-os-action="copiarlink">${ICO('copy')} Copiar link</button>` : ''}
                     <button type="button" class="btn btn-wa" data-os-action="garantia">${ICO('shield')} Enviar garantia</button>
                     <button type="button" class="btn btn-ghost" data-os-action="imprimir">${ICO('print')} Imprimir OS</button>
                     <button type="button" class="btn btn-ghost" data-os-action="etiqueta">${ICO('tag')} Etiqueta</button>
@@ -630,6 +675,8 @@ function atualizarPainel() {
             pronto: () => waPronto(os.whatsapp, os.idOS, os.modelo, os.valor),
             aprovado: () => waNotificarAprovado(os.idOS),
             garantia: () => waEnviarComprovante(os.idOS),
+            acompanhamento: () => enviarAcompanhamento(os.idOS),
+            copiarlink: () => copiarLinkAcompanhamento(os.idOS),
             imprimir: () => imprimirCupom(os.idOS),
             etiqueta: () => imprimirEtiqueta(os.idOS),
             excluir: () => excluirOS(os.idOS)
@@ -845,6 +892,7 @@ async function waEnviarComprovante(osId) {
         }
         localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
         atualizarPainel();
+        sincronizarAcompanhamento(os);
         const documento = await publico.get({ source: 'server' });
         if (!documento.exists) throw new Error('A garantia foi gravada, mas ainda não apareceu na consulta pública. Aguarde e tente enviar novamente.');
         pagina.searchParams.set('c', codigoCurto);
@@ -1048,36 +1096,6 @@ async function excluirServicoAvulso(id) {
 function abrirModalEstoque() { document.getElementById('stockModal').style.display = 'flex'; renderizarEstoque(); }
 function fecharModalEstoque() { document.getElementById('stockModal').style.display = 'none'; }
 
-function abrirModalRelatorio() {
-    document.getElementById('reportModal').style.display = 'flex';
-    
-    let lucroTotal = 0;
-    let contagemModelos = {};
-    
-    ordensServico.forEach(os => {
-        lucroTotal += (valorEfetivamenteRecebido(os) - (os.custoPeca || 0));
-        if (os.modelo) {
-            contagemModelos[os.modelo] = (contagemModelos[os.modelo] || 0) + 1;
-        }
-    });
-
-    let modeloMaisAtendido = "-";
-    let maxQt = 0;
-    for (let mod in contagemModelos) {
-        if (contagemModelos[mod] > maxQt) {
-            maxQt = contagemModelos[mod];
-            modeloMaisAtendido = `${mod} (${maxQt}x)`;
-        }
-    }
-
-    let avg = ordensServico.length > 0 ? (ordensServico.reduce((total, os) => total + Number(os.valor || 0), 0) / ordensServico.length) : 0;
-
-    document.getElementById('reportMonthLucro').innerText = `${formatarBRL(lucroTotal)}`;
-    document.getElementById('reportTopModel').innerText = modeloMaisAtendido;
-    document.getElementById('reportTicketAvg').innerText = `${formatarBRL(avg)}`;
-}
-
-function fecharModalRelatorio() { document.getElementById('reportModal').style.display = 'none'; }
 
 function abrirModalBackup() { document.getElementById('backupModal').style.display = 'flex'; }
 function fecharModalBackup() { document.getElementById('backupModal').style.display = 'none'; }
@@ -1214,7 +1232,7 @@ function imprimirCupom(osId) {
     const printSection = document.getElementById('printSection');
     printSection.innerHTML = `
         <div style="font-family: Arial, sans-serif; width: 100%; max-width: 300px; margin: 0 auto; color: #000;">
-            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#phone"></use></svg> OFICINA DO CELULAR</h2>
+            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=7#phone"></use></svg> OFICINA DO CELULAR</h2>
             <p style="text-align: center; margin: 2px 0; font-size: 12px;">ORDEM DE SERVIÇO</p>
             <p style="text-align: center; font-size: 11px; margin-bottom: 5px;">Data: ${os.data}</p>
             <hr style="border-top: 1px dashed #000; margin: 5px 0;">

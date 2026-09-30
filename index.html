@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="app.css?v=1">
+    <link rel="stylesheet" href="app.css?v=2">
 </head>
 <body>
 
@@ -36,6 +36,7 @@
                 <span class="nav-caption">Oficina</span>
                 <button type="button" class="active" onclick="irPara('overviewSection', this)"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#home"></use></svg> Início</button>
                 <button type="button" onclick="irPara('ordersSection', this)"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#clipboard"></use></svg> Ordens de serviço</button>
+                <button type="button" onclick="abrirModalClientes()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=7#users"></use></svg> Clientes</button>
                 <button type="button" id="deviceSearchNav" onclick="abrirPesquisaAparelho()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#search"></use></svg> Pesquisar aparelho</button>
                 <button type="button" onclick="abrirModalServicos()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#tool"></use></svg> Serviços avulsos</button>
                 <span class="nav-caption">Gestão</span>
@@ -131,6 +132,7 @@
         <div class="modal-card sheet-sm">
             <div class="modal-header"><h3>Mais opções</h3><button class="btn-close" type="button" aria-label="Fechar" onclick="fecharMenuMais()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#close"></use></svg></button></div>
             <div class="menu-list">
+                <button type="button" onclick="fecharMenuMais();abrirModalClientes()"><span class="menu-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=7#users"></use></svg></span>Clientes<svg class="ui-icon chev" aria-hidden="true"><use href="icons.svg?v=6#chevron-right"></use></svg></button>
                 <button type="button" onclick="fecharMenuMais();abrirModalEstoque()"><span class="menu-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#package"></use></svg></span>Estoque e peças<svg class="ui-icon chev" aria-hidden="true"><use href="icons.svg?v=6#chevron-right"></use></svg></button>
                 <button type="button" onclick="fecharMenuMais();abrirModalServicos()"><span class="menu-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#tool"></use></svg></span>Serviços avulsos<svg class="ui-icon chev" aria-hidden="true"><use href="icons.svg?v=6#chevron-right"></use></svg></button>
                 <button type="button" onclick="fecharMenuMais();irPara('financeSection')"><span class="menu-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#wallet"></use></svg></span>Financeiro<svg class="ui-icon chev" aria-hidden="true"><use href="icons.svg?v=6#chevron-right"></use></svg></button>
@@ -303,16 +305,40 @@
 
     <!-- ===== RELATÓRIOS ===== -->
     <div id="reportModal" class="modal-overlay" style="display: none;">
-        <div class="modal-card">
+        <div class="modal-card modal-wide">
             <div class="modal-header">
                 <h3>Relatórios</h3>
                 <button class="btn-close" type="button" aria-label="Fechar relatórios" onclick="fecharModalRelatorio()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#close"></use></svg></button>
             </div>
-            <div class="stat-grid">
-                <div class="stat-card"><span class="stat-label">Recebido menos peças (todas as OS)</span><strong class="stat-value" data-tone="ok" id="reportMonthLucro">R$ 0,00</strong></div>
-                <div class="stat-card"><span class="stat-label">Ticket médio por OS</span><strong class="stat-value" data-tone="warn" id="reportTicketAvg">R$ 0,00</strong></div>
-                <div class="stat-card wide"><span class="stat-label">Modelo mais atendido</span><strong class="stat-value" id="reportTopModel">-</strong></div>
+            <div class="report-toolbar">
+                <button type="button" class="icon-btn" aria-label="Mês anterior" onclick="mudarMesRelatorio(-1)"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#chevron-left"></use></svg></button>
+                <div class="report-month"><strong id="reportTitle">Mês</strong><input type="month" id="reportMonth" aria-label="Escolher mês" onchange="renderizarRelatorio()"></div>
+                <button type="button" class="icon-btn" aria-label="Próximo mês" onclick="mudarMesRelatorio(1)"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#chevron-right"></use></svg></button>
             </div>
+            <p class="modal-sub">Valores das OS pelo mês de entrada do aparelho.</p>
+            <div class="stat-grid report-stats" id="reportStats"></div>
+            <div class="panel">
+                <p class="panel-title">Faturamento dos últimos 6 meses</p>
+                <p class="modal-sub">Toque em um mês para ver os números dele.</p>
+                <div id="reportChart" class="bar-chart"></div>
+            </div>
+            <div class="report-cols">
+                <div class="panel"><p class="panel-title">Aparelhos mais atendidos</p><ol id="reportTopModels" class="rank-list"></ol></div>
+                <div class="panel"><p class="panel-title">Componentes mais trocados</p><ol id="reportTopParts" class="rank-list"></ol></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CLIENTES ===== -->
+    <div id="clientsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card modal-wide">
+            <div class="modal-header">
+                <h3>Clientes</h3>
+                <button class="btn-close" type="button" aria-label="Fechar clientes" onclick="fecharModalClientes()"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#close"></use></svg></button>
+            </div>
+            <p class="modal-sub" id="clientsCount">Montado a partir das ordens de serviço.</p>
+            <div class="search-field client-search"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#search"></use></svg><input type="search" id="clientSearch" placeholder="Buscar por nome ou telefone" oninput="renderizarClientes()" autocomplete="off" aria-label="Buscar clientes"></div>
+            <div id="clientList" class="client-list"></div>
         </div>
     </div>
 
@@ -392,7 +418,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="script.js?v=6"></script>
+    <script src="script.js?v=7"></script>
+    <script src="recursos.js?v=1"></script>
     <script>
         if ('serviceWorker' in navigator) {
             const wasControlled = Boolean(navigator.serviceWorker.controller);
