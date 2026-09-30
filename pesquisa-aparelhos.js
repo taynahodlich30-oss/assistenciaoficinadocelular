@@ -94,7 +94,7 @@
   const pareceImei = v => /^\d{14,15}$/.test(String(v || '').replace(/[\s-]/g, ''));
   const pareceCodigo = v => /^[A-Za-z0-9-]{5,}$/.test(v) && /\d/.test(v);
   const COR = { Xiaomi: '#fb923c', Samsung: '#60a5fa', Motorola: '#22d3ee', Apple: '#cbd5e1', Realme: '#facc15' };
-  const ic = id => '<svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#' + id + '"></use></svg>';
+  const ic = id => '<svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#' + id + '"></use></svg>';
   const ICONE = { lupa: ic('search'), camera: ic('camera'), lista: ic('list'), web: ic('globe'), fechar: ic('close') };
   const tile = (id, cor) => '<span class="oc-tile"' + (cor ? ' style="--tc:' + cor + '"' : '') + '>' + ic(id) + '</span>';
   const iconeAparelho = marca => tile('phone', COR[marca] || '#9ef4ac');
@@ -215,38 +215,7 @@
   }
 
   /* ===== 5. ESTILO ===== */
-  const css = document.createElement('style');
-  css.textContent =
-    '.dm-suggest{border:1px solid #334155;background:#0f172a;border-radius:10px;margin:-6px 0 12px;overflow:hidden}' +
-    '.dm-suggest button{display:block;width:100%;text-align:left;background:transparent;color:#fff;padding:10px 12px;border-radius:0;font-size:13px;font-weight:600;border-bottom:1px solid #1e293b}' +
-    '.dm-suggest button:last-child{border-bottom:0}.dm-suggest button:hover{background:#14334b}' +
-    '.dm-suggest small{display:block;color:#94a3b8;font-weight:400;margin-top:2px}' +
-    '.dm-note{padding:10px 12px;font-size:12px;color:#cbd5e1;line-height:1.5}.dm-note a{color:#38bdf8}' +
-    '.dm-imei{display:block;margin:-6px 0 12px;font-size:12px;color:#94a3b8;min-height:0}';
-  document.head.appendChild(css);
-  const css3d = document.createElement('style');
-  css3d.textContent =
-    '.oc3d{width:44px;height:44px;flex-shrink:0;filter:drop-shadow(0 4px 5px rgba(0,0,0,.4))}' +
-    '#deviceSearchModal{backdrop-filter:blur(6px)}' +
-    '#deviceSearchModal .device-search-card{background:linear-gradient(165deg,#1c2d4a 0,#111c33 60%,#0d1629 100%);border-color:#3b4f72;box-shadow:0 -20px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08)}' +
-    '#deviceSearchModal .device-search-head{justify-content:flex-start;gap:14px;margin-bottom:16px}' +
-    '#deviceSearchModal .device-search-head .oc3d{width:54px;height:54px}' +
-    '#deviceSearchModal .device-search-head h3{font-size:20px;letter-spacing:-.01em}' +
-    '#deviceSearchModal .device-search-head .btn-close{margin-left:auto;width:36px;height:36px;border-radius:50%;background:#22324f;color:#cbd5e1;font-size:20px;float:none}' +
-    '#deviceSearchModal .device-search-row input,#deviceSearchModal .device-search-row select{background:#0b1426;border-color:#3b4f72;border-radius:12px;padding:14px}' +
-    '#deviceSearchModal .device-search-row input:focus{box-shadow:0 0 0 3px rgba(56,189,248,.25)}' +
-    '#deviceSearchModal .device-result{gap:12px;padding:12px 14px;background:linear-gradient(180deg,#14223c,#0f1a2f);border-color:#2f4266;border-radius:14px;box-shadow:0 6px 14px rgba(0,0,0,.25)}' +
-    '#deviceSearchModal .device-result:hover{border-color:#38bdf8}' +
-    '#deviceSearchModal .device-result>div{flex:1;min-width:0}' +
-    '#deviceSearchModal .device-result button{background:linear-gradient(180deg,#4ade80,#16a34a);color:#052e16;border-radius:10px;padding:11px 14px;font-size:12px;box-shadow:0 3px 0 #166534,0 6px 10px rgba(0,0,0,.3)}' +
-    '#deviceSearchModal .device-result button:active{transform:translateY(2px);box-shadow:0 1px 0 #166534}' +
-    '.oc-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0b1426;border:1px solid #2f4266;border-radius:6px;padding:1px 6px;color:#7dd3fc;font-size:11.5px}' +
-    '#deviceSearchModal .device-empty{padding:26px 16px}#deviceSearchModal .device-empty .oc3d{width:64px;height:64px;display:block;margin:0 auto 8px}' +
-    '#deviceSearchModal .device-search-tools button,#deviceSearchModal .device-search-tools a{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:8px 14px}' +
-    '#deviceSearchModal .device-search-tools .oc3d{width:22px;height:22px;filter:none}' +
-    '.btn-search-action .oc3d,.side-nav .oc3d{width:22px!important;height:22px!important;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}' +
-    '.dm-suggest button{display:flex;align-items:center;gap:10px}.dm-suggest .oc3d{width:32px;height:32px}';
-  document.head.appendChild(css3d);
+  /* Estilos ficam em app.css */
 
   /* ===== 6. CAMPO "MODELO DO APARELHO" (OS) ===== */
   function iniciarCampo() {
@@ -380,9 +349,9 @@
     const box = document.createElement('div');
     box.id = 'deviceSearchPhoto';
     box.className = 'dm-note';
-    box.style.cssText = 'border:1px solid #334155;border-radius:12px;background:#0f172a;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start';
+    box.classList.add('photo-hint');
     box.innerHTML = '<img alt="Foto do aparelho" src="' + urlFoto + '" style="width:84px;height:84px;object-fit:cover;border-radius:8px;flex-shrink:0">' +
-      '<div><strong style="color:#fff">A foto ajuda só a comparar</strong><br>O sistema não identifica o modelo sozinho pela foto, porque várias linhas usam tampa e câmeras parecidas. ' +
+      '<div><strong>A foto ajuda só a comparar</strong><br>O sistema não identifica o modelo sozinho pela foto, porque várias linhas usam tampa e câmeras parecidas. ' +
       'Confirme pelo código técnico: Configurações › Sobre o telefone › Número do modelo (Android); Ajustes › Geral › Sobre (iPhone; toque em Número do modelo para ver o código Axxxx); ou na etiqueta da caixa e na bandeja do chip.</div>';
     $('deviceSearchResults').insertAdjacentElement('beforebegin', box);
     entrada.value = '';
@@ -390,18 +359,6 @@
 
   function iniciar() {
     iniciarCampo();
-    if (!$('ocSprite')) {
-      const d = document.createElement('div');
-      d.id = 'ocSprite';
-      d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
-      d.innerHTML = '<svg width="0" height="0" aria-hidden="true"><defs>' +
-        '<linearGradient id="ocBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#0369a1"/></linearGradient>' +
-        '<linearGradient id="ocDark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#64748b"/><stop offset="1" stop-color="#1e293b"/></linearGradient>' +
-        '<linearGradient id="ocPurple" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c4b5fd"/><stop offset="1" stop-color="#6d28d9"/></linearGradient>' +
-        '<linearGradient id="ocShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>' +
-        '</defs></svg>';
-      document.body.appendChild(d);
-    }
     const cab = document.querySelector('#deviceSearchModal .device-search-head');
     if (cab && !cab.querySelector('.oc-tile')) cab.insertAdjacentHTML('afterbegin', tile('phone-search'));
     const fechar = cab && cab.querySelector('.btn-close');

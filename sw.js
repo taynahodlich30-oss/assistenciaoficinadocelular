@@ -1,12 +1,11 @@
-const CACHE_NAME = 'oficina-os-cache-v11-icones';
+const CACHE_NAME = 'oficina-os-cache-v12-painel';
 const urlsToCache = [
   'index.html',
-  'style.css',
-  'redesign.css?v=6',
-  'icons.svg?v=5',
+  'app.css?v=1',
+  'icons.svg?v=6',
   'app-icon-192.png',
   'app-icon-512.png',
-  'script.js?v=5',
+  'script.js?v=6',
   'garantia.html',
   'garantia.js',
   'manifest.json?v=4'

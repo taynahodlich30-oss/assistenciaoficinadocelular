@@ -104,14 +104,20 @@ async function logout() { if (auth) await auth.signOut(); }
 function exibirApp() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appScreen').style.display = 'block';
+    atualizarSaudacao();
+    mostrarCarregando();
     inicializarCanvas();
     carregarDadosDoBanco();
 }
+let temporizadorAviso = null;
 function avisar(mensagem, erro = false) {
     const aviso = document.getElementById('appNotice');
-    aviso.textContent = mensagem;
+    aviso.innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#${erro ? 'alert' : 'check'}"></use></svg><span></span>`;
+    aviso.querySelector('span').textContent = mensagem;
     aviso.classList.toggle('error', erro);
-    aviso.style.display = 'block';
+    aviso.style.display = 'flex';
+    clearTimeout(temporizadorAviso);
+    temporizadorAviso = setTimeout(() => { aviso.style.display = 'none'; }, erro ? 8000 : 3500);
 }
 
 async function carregarDadosDoBanco() {
@@ -183,7 +189,7 @@ async function salvarNoBanco(novaOS) {
 }
 
 async function excluirOS(osId) {
-    if (!confirm("Tem certeza que deseja excluir esta Ordem de Serviço?")) return;
+    if (!confirm(`Excluir a ${osId}? Essa ação não pode ser desfeita.`)) return;
 
     const index = ordensServico.findIndex(o => o.idOS === osId);
     if (index !== -1) {
@@ -195,6 +201,7 @@ async function excluirOS(osId) {
         ordensServico.splice(index, 1);
         localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
         atualizarPainel();
+        avisar(`${osId} excluída.`);
     }
 }
 
@@ -242,7 +249,7 @@ function editarOS(osId) {
     }
 
     document.getElementById('modalTitle').innerText = `Editar ${os.idOS}`;
-    document.getElementById('btnSaveOS').innerText = "Atualizar Ordem de Serviço";
+    document.getElementById('btnSaveOS').innerText = 'Salvar alterações';
     abrirModalOS();
 }
 
@@ -284,6 +291,7 @@ async function salvarPecaEstoque(e) {
     localStorage.setItem('oficina_stock_db', JSON.stringify(estoquePecas));
 
     document.getElementById('stockForm').reset();
+    avisar(`${novaPeca.nome} adicionada ao estoque.`);
     renderizarEstoque();
     atualizarSelectEstoque();
 }
@@ -296,10 +304,10 @@ function renderizarEstoque() {
         div.className = 'stock-item';
         div.innerHTML = `
             <div>
-                <strong class="stock-name">${item.nome}</strong><br>
-                <small>Fornecedor: <b class="stock-supplier">${item.fornecedor || 'Não especificado'}</b> | Qtd: ${item.qtd} un | ${formatarBRL(item.custo)}</small>
+                <strong class="stock-name">${escaparHtml(item.nome)}</strong>
+                <small>${escaparHtml(item.fornecedor || 'Fornecedor não informado')} · ${Number(item.qtd || 0)} un · ${formatarBRL(item.custo)} cada</small>
             </div>
-            ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#alert"></use></svg> Baixo</span>' : ''}
+            ${item.qtd <= 2 ? '<span class="stock-low"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#alert"></use></svg> Estoque baixo</span>' : ''}
         `;
         list.appendChild(div);
     });
@@ -360,6 +368,7 @@ async function alterarStatusOS(osId, novoStatus) {
         os.status = novoStatus;
         localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
         atualizarPainel();
+        avisar(`${osId} agora está em "${novoStatus}".`);
     }
 }
 
@@ -386,6 +395,8 @@ function previewImages(event) {
 
 async function salvarOS(event) {
     event.preventDefault();
+    document.getElementById('saveError').textContent = '';
+    if (!validarFormularioOS()) return;
     const botaoSalvar = document.getElementById('btnSaveOS');
     botaoSalvar.disabled = true;
     document.getElementById('saveError').textContent = '';
@@ -451,7 +462,7 @@ async function salvarOS(event) {
         return;
     }
     botaoSalvar.disabled = false;
-    avisar('OS salva no Firebase com sucesso.');
+    avisar(docIdExistente ? `${osNumber} atualizada.` : `${osNumber} criada com sucesso.`);
 
     fecharModalOS(true);
 }
@@ -469,107 +480,150 @@ function urlFotoSegura(valor) {
     } catch { return ''; }
 }
 
+const ICO = id => `<svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#${id}"></use></svg>`;
+function dataDaOS(os) {
+    const [dia, mes, ano] = String(os?.data || '').split('/').map(Number);
+    return ano ? new Date(ano, (mes || 1) - 1, dia || 1) : null;
+}
+function diasDesde(os) {
+    const d = dataDaOS(os);
+    if (!d) return 0;
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    return Math.max(0, Math.round((hoje - d) / 86400000));
+}
+function textoDias(n) { return n === 0 ? 'hoje' : n === 1 ? 'há 1 dia' : `há ${n} dias`; }
+function saldoAReceber(os) { return Math.max(0, Number(os.valor || 0) - valorEfetivamenteRecebido(os)); }
+
+function atualizarAtencao() {
+    const prontos = ordensServico.filter(os => os.status === 'Pronto');
+    const orcamentos = ordensServico.filter(os => os.status === 'Em orçamento');
+    const parados = orcamentos.filter(os => diasDesde(os) >= 2);
+    const pendentes = ordensServico.filter(os => os.statusPagamento !== 'Pago' && saldoAReceber(os) > 0);
+    const aReceber = pendentes.reduce((s, os) => s + saldoAReceber(os), 0);
+    const hojeTxt = new Date().toLocaleDateString('pt-BR');
+    const deHoje = ordensServico.filter(os => os.data === hojeTxt).length;
+    const semana = ordensServico.filter(os => dataDaOS(os) && diasDesde(os) < 7).length;
+    const maisAntigo = prontos.reduce((m, os) => Math.max(m, diasDesde(os)), 0);
+
+    const definir = (id, valor, dica, alerta) => {
+        document.getElementById(id).textContent = valor;
+        document.getElementById(id + 'Hint').textContent = dica;
+        const card = document.getElementById(id).closest('.attention-card');
+        card.classList.remove('is-loading');
+        card.classList.toggle('has-alert', Boolean(alerta));
+    };
+    definir('attReady', prontos.length, prontos.length ? `Mais antigo entrou ${textoDias(maisAntigo)}` : 'Nenhum aparelho esperando', prontos.length);
+    definir('attQuotes', orcamentos.length, parados.length ? `${parados.length} parado${parados.length > 1 ? 's' : ''} há 2 dias ou mais` : orcamentos.length ? 'Todos recentes' : 'Nenhum orçamento pendente', parados.length);
+    definir('attReceivable', formatarBRL(aReceber), pendentes.length ? `Em ${pendentes.length} ${pendentes.length === 1 ? 'ordem' : 'ordens'}` : 'Tudo recebido', false);
+    definir('attToday', deHoje, `${semana} nos últimos 7 dias`, false);
+}
+
+function filtrarPagamentoPendente() {
+    document.getElementById('paymentFilter').value = 'Pendente';
+    filtrarPorStatus('Todos');
+}
+
 function atualizarPainel() {
     const osList = document.getElementById('osList');
+    const abertas = new Set(Array.from(osList.querySelectorAll('.os-row[open]'), el => el.dataset.id));
     osList.innerHTML = '';
 
-    let total = ordensServico.length;
-    let analise = 0, orcamento = 0, reparo = 0, prontos = 0;
+    const contar = status => ordensServico.filter(os => os.status === status).length;
+    document.getElementById('countTotal').innerText = ordensServico.length;
+    document.getElementById('countAnalise').innerText = contar('Em análise');
+    document.getElementById('countOrcamento').innerText = contar('Em orçamento');
+    document.getElementById('countReparo').innerText = contar('Em reparo');
+    document.getElementById('countProntos').innerText = contar('Pronto');
+
     let bruto = 0, custo = 0, recebido = 0;
-
-    ordensServico.forEach((os) => {
-        if (os.status === 'Em análise') analise++;
-        if (os.status === 'Em orçamento') orcamento++;
-        if (os.status === 'Em reparo') reparo++;
-        if (os.status === 'Pronto') prontos++;
-
-        bruto += (os.valor || 0);
-        custo += (os.custoPeca || 0);
-        recebido += valorEfetivamenteRecebido(os);
-    });
-
-    document.getElementById('countTotal').innerText = total;
-    document.getElementById('countAnalise').innerText = analise;
-    document.getElementById('countOrcamento').innerText = orcamento;
-    document.getElementById('countReparo').innerText = reparo;
-    document.getElementById('countProntos').innerText = prontos;
-
-    document.getElementById('totalBruto').innerText = `${formatarBRL(bruto)}`;
-    document.getElementById('totalRecebido').innerText = `${formatarBRL(recebido)}`;
-    document.getElementById('totalCusto').innerText = `${formatarBRL(custo)}`;
-    document.getElementById('totalLucro').innerText = `${formatarBRL((recebido - custo))}`;
+    ordensServico.forEach(os => { bruto += Number(os.valor || 0); custo += Number(os.custoPeca || 0); recebido += valorEfetivamenteRecebido(os); });
+    document.getElementById('totalBruto').innerText = formatarBRL(bruto);
+    document.getElementById('totalRecebido').innerText = formatarBRL(recebido);
+    document.getElementById('totalCusto').innerText = formatarBRL(custo);
+    document.getElementById('totalLucro').innerText = formatarBRL(recebido - custo);
+    atualizarAtencao();
 
     const termo = document.getElementById('searchInput').value.trim().toLocaleLowerCase('pt-BR');
     const pagamento = document.getElementById('paymentFilter').value;
     const mes = document.getElementById('monthFilter').value;
     const ordensFiltradas = ordensServico.filter(os => {
         if (statusFiltroAtual !== 'Todos' && os.status !== statusFiltroAtual) return false;
-        if (pagamento !== 'Todos' && os.statusPagamento !== pagamento) return false;
+        if (pagamento === 'Pendente') { if (os.statusPagamento === 'Pago' || saldoAReceber(os) <= 0) return false; }
+        else if (pagamento !== 'Todos' && os.statusPagamento !== pagamento) return false;
         if (mes) {
             const partes = (os.data || '').split('/');
             if (partes.length !== 3 || `${partes[2]}-${partes[1]}` !== mes) return false;
         }
         return !termo || [os.idOS, os.cliente, os.whatsapp, os.modelo, os.imei, os.fornecedorPeca, os.defeito].some(valor => String(valor || '').toLocaleLowerCase('pt-BR').includes(termo));
-    }).sort((a, b) => {
-        const chaveData = data => {
-            const [dia, mes, ano] = String(data || '').split('/').map(Number);
-            return (ano || 0) * 10000 + (mes || 0) * 100 + (dia || 0);
-        };
-        return chaveData(b.data) - chaveData(a.data);
-    });
+    }).sort((a, b) => (dataDaOS(b) || 0) - (dataDaOS(a) || 0));
+
     const quantidade = ordensFiltradas.length;
-    document.getElementById('resultsCount').textContent = `${quantidade} ${quantidade === 1 ? 'ordem encontrada' : 'ordens encontradas'} de ${ordensServico.length}`;
+    document.getElementById('resultsCount').textContent = quantidade === ordensServico.length
+        ? `${quantidade} ${quantidade === 1 ? 'ordem' : 'ordens'}`
+        : `${quantidade} de ${ordensServico.length} ${ordensServico.length === 1 ? 'ordem' : 'ordens'}`;
+    document.querySelector('.os-table-head').style.display = quantidade ? '' : 'none';
     if (!quantidade) {
         osList.innerHTML = ordensServico.length
-            ? '<div class="empty-state"><span class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#search"></use></svg></span><h3>Nenhuma ordem encontrada</h3><p>Tente outro nome, aparelho ou ajuste os filtros.</p><button type="button" class="empty-action" onclick="limparFiltros()">Limpar filtros</button></div>'
-            : '<div class="empty-state"><span class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#clipboard"></use></svg></span><h3>Sua primeira ordem começa aqui</h3><p>Cadastre um aparelho para acompanhar o atendimento do início à entrega.</p><button type="button" class="empty-action" onclick="abrirModalOS()">Criar primeira ordem</button></div>';
+            ? `<div class="empty-state"><span class="empty-icon">${ICO('search')}</span><h3>Nenhuma ordem encontrada</h3><p>Tente outro nome ou aparelho, ou limpe os filtros.</p><button type="button" class="empty-action" onclick="limparFiltros()">Limpar filtros</button></div>`
+            : `<div class="empty-state"><span class="empty-icon">${ICO('clipboard')}</span><h3>Nenhuma OS cadastrada ainda</h3><p>Cadastre o primeiro aparelho para acompanhar o atendimento do início à entrega.</p><button type="button" class="empty-action" onclick="abrirModalOS()">Criar primeira OS</button></div>`;
+        return;
     }
 
-    ordensFiltradas.forEach((os) => {
+    const pagamentoCurto = { 'Pago': 'Pago', 'Aguardando Pagamento': 'Aguardando', 'Parcial (Entrada/Resta)': 'Parcial' };
+    ordensFiltradas.forEach(os => {
         const fotosSeguras = (os.fotos || []).map(urlFotoSegura).filter(Boolean);
-        const fotosHTML = fotosSeguras.length ? `<div class="preview-container">${fotosSeguras.map(f => `<img src="${f}" class="preview-thumb" alt="Foto do aparelho" loading="lazy">`).join('')}</div>` : '';
-
+        const fotosHTML = fotosSeguras.length ? `<div class="full"><dt>Fotos de entrada</dt><dd><div class="preview-container">${fotosSeguras.map(f => `<img src="${f}" class="preview-thumb" alt="Foto do aparelho" loading="lazy">`).join('')}</div></dd></div>` : '';
         let classePagamento = 'payment-pending';
-        if (os.statusPagamento === "Pago") classePagamento = 'payment-paid';
-        if (os.statusPagamento === "Parcial (Entrada/Resta)") classePagamento = 'payment-partial';
+        if (os.statusPagamento === 'Pago') classePagamento = 'payment-paid';
+        if (os.statusPagamento === 'Parcial (Entrada/Resta)') classePagamento = 'payment-partial';
+        const recebidoOS = valorEfetivamenteRecebido(os);
+        const pagTexto = os.statusPagamento === 'Parcial (Entrada/Resta)' ? `Falta ${formatarBRL(saldoAReceber(os))}` : (pagamentoCurto[os.statusPagamento] || 'Aguardando');
+        const opcoes = ['Em análise', 'Em orçamento', 'Em reparo', 'Pronto'].map(s => `<option value="${s}" ${os.status === s ? 'selected' : ''}>${s}</option>`).join('');
 
-        const card = document.createElement('div');
-        card.className = 'os-card';
-        card.dataset.status = os.status || '';
-        card.innerHTML = `
-            <div class="os-card-header">
-                <div class="os-identity"><span class="os-code">${escaparHtml(os.idOS)}</span><strong>${escaparHtml(os.cliente)}</strong></div>
-                <select class="status-select" aria-label="Etapa da OS ${escaparHtml(os.idOS)}">
-                    <option value="Em análise" ${os.status === 'Em análise' ? 'selected' : ''}>Em análise</option>
-                    <option value="Em orçamento" ${os.status === 'Em orçamento' ? 'selected' : ''}>Em orçamento</option>
-                    <option value="Em reparo" ${os.status === 'Em reparo' ? 'selected' : ''}>Em reparo</option>
-                    <option value="Pronto" ${os.status === 'Pronto' ? 'selected' : ''}>Pronto</option>
-                </select>
-            </div>
-            <div class="os-card-main"><div><span class="os-overline">APARELHO</span><strong>${escaparHtml(os.modelo)}</strong></div><div><span class="os-overline">DEFEITO INFORMADO</span><strong>${escaparHtml(os.defeito)}</strong></div><div class="os-card-price"><span class="os-overline">VALOR DA OS</span><strong>${formatarBRL(Number(os.valor || 0))}</strong></div></div>
-            <div class="os-card-badges"><span class="payment-badge ${classePagamento}">${escaparHtml(os.statusPagamento || 'Aguardando')}</span><span>Recebido: ${formatarBRL(valorEfetivamenteRecebido(os))}</span></div>
-            <details class="os-card-details"><summary>Ver detalhes do aparelho</summary><div class="os-card-details-body">
-                <p><strong>IMEI / Série:</strong> ${escaparHtml(os.imei)}</p>
-                <p><strong>Componentes trocados:</strong> ${escaparHtml(os.pecasTrocadas || 'Nenhum registrado')}</p>
-                <p><strong>Descrição do serviço:</strong> ${escaparHtml(os.descricaoServico || 'Sem detalhes')}</p>
-                <p><strong>Fornecedor:</strong> ${escaparHtml(os.fornecedorPeca || 'Não informado')} · <strong>Custo da peça:</strong> ${formatarBRL(Number(os.custoPeca || 0))}</p>
-                ${os.detalhesPagamento ? `<p><strong>Pagamento:</strong> ${escaparHtml(os.detalhesPagamento)}</p>` : ''}
-                ${fotosHTML}
-            </div></details>
-            <div class="os-card-actions">
-                <button type="button" class="btn-sm btn-edit" data-os-action="editar"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#edit"></use></svg> Editar OS</button>
-                <button type="button" class="btn-sm btn-wa-orcamento" data-os-action="orcamento"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#clock"></use></svg> Orçamento</button>
-                <button type="button" class="btn-sm btn-wa-pronto" data-os-action="pronto"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#send"></use></svg> Avisar pronto</button>
-            </div>
-            <details class="os-card-more"><summary>Mais ações <svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#arrow"></use></svg></summary><div class="os-card-subactions">
-                <button type="button" class="btn-sm btn-wa-aprovado" data-os-action="aprovado"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#check"></use></svg> Avisar aprovação</button>
-                <button type="button" class="btn-sm btn-wa-comprovante" data-os-action="garantia"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#shield"></use></svg> Enviar garantia</button>
-                <button type="button" class="btn-sm" data-os-action="imprimir"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#print"></use></svg> Imprimir OS</button>
-                <button type="button" class="btn-sm" data-os-action="etiqueta"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#tag"></use></svg> Imprimir etiqueta</button>
-                <button type="button" class="btn-sm btn-delete" data-os-action="excluir"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#trash"></use></svg> Excluir OS</button>
-            </div></details>
-        `;
-        card.querySelector('.status-select').addEventListener('change', event => alterarStatusOS(os.idOS, event.target.value));
+        const linha = document.createElement('details');
+        linha.className = 'os-row';
+        linha.dataset.status = os.status || '';
+        linha.dataset.id = os.idOS || '';
+        if (abertas.has(os.idOS)) linha.open = true;
+        linha.innerHTML = `
+            <summary class="os-summary">
+                <span class="c-code"><span class="os-code">${escaparHtml(os.idOS)}</span><span class="os-date">${escaparHtml(os.data || '')}</span></span>
+                <span class="c-client"><span class="os-main">${escaparHtml(os.cliente)}</span><span class="os-sub">${escaparHtml(os.whatsapp || '')}</span></span>
+                <span class="c-device"><span class="os-main">${escaparHtml(os.modelo)}</span><span class="os-sub">${escaparHtml(os.defeito)}</span></span>
+                <span class="c-status"><span class="status-chip">${escaparHtml(os.status || 'Sem etapa')}</span></span>
+                <span class="c-value right"><span class="os-value">${formatarBRL(os.valor)}</span><span class="payment-badge ${classePagamento}">${escaparHtml(pagTexto)}</span></span>
+                <span class="os-chev">${ICO('chevron-down')}</span>
+            </summary>
+            <div class="os-expand">
+                <div class="os-status-line">
+                    <label for="st-${escaparHtml(os.idOS)}">Etapa</label>
+                    <select class="status-select" id="st-${escaparHtml(os.idOS)}">${opcoes}</select>
+                    <span class="os-sub">${escaparHtml(os.idOS)} · entrada em ${escaparHtml(os.data || '-')}</span>
+                </div>
+                <dl class="os-detail-grid">
+                    <div><dt>IMEI / série</dt><dd>${escaparHtml(os.imei || '-')}</dd></div>
+                    <div><dt>Recebido</dt><dd>${formatarBRL(recebidoOS)} de ${formatarBRL(os.valor)}</dd></div>
+                    <div><dt>Peça</dt><dd>${escaparHtml(os.peca && os.peca !== 'Nenhuma' ? os.peca : '-')}</dd></div>
+                    <div><dt>Componentes trocados</dt><dd>${escaparHtml(os.pecasTrocadas || 'Nenhum registrado')}</dd></div>
+                    <div><dt>Fornecedor</dt><dd>${escaparHtml(os.fornecedorPeca || 'Não informado')}</dd></div>
+                    <div><dt>Custo da peça</dt><dd>${formatarBRL(os.custoPeca)}</dd></div>
+                    <div class="full"><dt>Descrição do serviço</dt><dd>${escaparHtml(os.descricaoServico || 'Sem detalhes')}</dd></div>
+                    ${os.detalhesPagamento ? `<div class="full"><dt>Pagamento</dt><dd>${escaparHtml(os.detalhesPagamento)}</dd></div>` : ''}
+                    ${fotosHTML}
+                </dl>
+                <div class="os-actions" style="margin-top:14px">
+                    <button type="button" class="btn btn-secondary" data-os-action="editar">${ICO('edit')} Editar</button>
+                    <button type="button" class="btn btn-wa" data-os-action="orcamento">${ICO('send')} Orçamento</button>
+                    <button type="button" class="btn btn-wa" data-os-action="aprovado">${ICO('check')} Avisar aprovação</button>
+                    <button type="button" class="btn btn-wa" data-os-action="pronto">${ICO('send')} Avisar pronto</button>
+                    <button type="button" class="btn btn-wa" data-os-action="garantia">${ICO('shield')} Enviar garantia</button>
+                    <button type="button" class="btn btn-ghost" data-os-action="imprimir">${ICO('print')} Imprimir OS</button>
+                    <button type="button" class="btn btn-ghost" data-os-action="etiqueta">${ICO('tag')} Etiqueta</button>
+                    <span class="spacer"></span>
+                    <button type="button" class="btn btn-danger" data-os-action="excluir">${ICO('trash')} Excluir</button>
+                </div>
+            </div>`;
+        linha.querySelector('.status-select').addEventListener('change', event => alterarStatusOS(os.idOS, event.target.value));
         const acoes = {
             editar: () => editarOS(os.idOS),
             orcamento: () => abrirModalOrcamentoOpcoes(os.idOS, os.whatsapp, os.modelo),
@@ -580,8 +634,92 @@ function atualizarPainel() {
             etiqueta: () => imprimirEtiqueta(os.idOS),
             excluir: () => excluirOS(os.idOS)
         };
-        card.querySelectorAll('[data-os-action]').forEach(botao => botao.addEventListener('click', acoes[botao.dataset.osAction]));
-        osList.appendChild(card);
+        linha.querySelectorAll('[data-os-action]').forEach(botao => botao.addEventListener('click', acoes[botao.dataset.osAction]));
+        osList.appendChild(linha);
+    });
+}
+
+function mostrarCarregando() {
+    const osList = document.getElementById('osList');
+    const linha = '<details class="os-row is-skeleton"><summary class="os-summary" onclick="event.preventDefault()"><span class="c-code"><span class="skeleton"></span></span><span class="c-client"><span class="skeleton"></span><span class="skeleton"></span></span><span class="c-device"><span class="skeleton"></span><span class="skeleton"></span></span><span class="c-status"><span class="skeleton" style="width:90px"></span></span><span class="c-value"><span class="skeleton"></span></span><span></span></summary></details>';
+    osList.innerHTML = linha.repeat(4);
+    document.getElementById('resultsCount').textContent = 'Carregando...';
+}
+
+/* ----- Navegação ----- */
+function irPara(id, botao) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const indice = { overviewSection: 0, ordersSection: 1 };
+    document.querySelectorAll('.side-nav button, .bottom-nav button').forEach(b => b.classList.remove('active'));
+    if (botao) botao.classList.add('active');
+    if (id in indice) document.querySelectorAll('.bottom-nav button')[indice[id]]?.classList.add('active');
+}
+function abrirMenuMais() { document.getElementById('moreModal').style.display = 'flex'; }
+function fecharMenuMais() { document.getElementById('moreModal').style.display = 'none'; }
+function atualizarSaudacao() {
+    const agora = new Date();
+    const h = agora.getHours();
+    document.getElementById('greeting').textContent = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    const data = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+    document.getElementById('todayLabel').textContent = data.charAt(0).toUpperCase() + data.slice(1);
+}
+
+/* ----- Formulário de OS em etapas ----- */
+let etapaOS = 0;
+const TOTAL_ETAPAS_OS = 5;
+function irEtapaOS(n) {
+    etapaOS = Math.max(0, Math.min(TOTAL_ETAPAS_OS - 1, n));
+    document.querySelectorAll('#osForm .form-step').forEach(step => { step.hidden = Number(step.dataset.step) !== etapaOS; });
+    document.querySelectorAll('#osStepper li').forEach((li, i) => {
+        li.classList.toggle('current', i === etapaOS);
+        li.classList.toggle('done', i < etapaOS);
+    });
+    document.getElementById('osPrev').hidden = etapaOS === 0;
+    document.getElementById('osNext').hidden = etapaOS === TOTAL_ETAPAS_OS - 1;
+    const card = document.querySelector('#osModal .modal-card');
+    if (card) card.scrollTop = 0;
+    if (etapaOS === 4) ajustarCanvasAssinatura();
+}
+function mudarEtapaOS(delta) { irEtapaOS(etapaOS + delta); }
+function validarFormularioOS() {
+    let primeiroInvalido = null;
+    document.querySelectorAll('#osStepper li').forEach(li => li.classList.remove('has-error'));
+    document.querySelectorAll('#osForm [required]').forEach(campo => {
+        const vazio = !String(campo.value || '').trim();
+        campo.classList.toggle('is-invalid', vazio);
+        if (vazio) {
+            const etapa = Number(campo.closest('.form-step')?.dataset.step || 0);
+            document.querySelectorAll('#osStepper li')[etapa]?.classList.add('has-error');
+            if (!primeiroInvalido) primeiroInvalido = campo;
+        }
+    });
+    if (primeiroInvalido) {
+        irEtapaOS(Number(primeiroInvalido.closest('.form-step').dataset.step));
+        document.getElementById('saveError').textContent = 'Preencha os campos obrigatórios marcados em vermelho.';
+        primeiroInvalido.focus();
+        return false;
+    }
+    return true;
+}
+function ajustarCanvasAssinatura() {
+    if (!canvas || !ctx) return;
+    const largura = Math.round(canvas.getBoundingClientRect().width);
+    if (!largura || canvas.width === largura) return;
+    const estavaVazia = canvas.toDataURL() === assinaturaVazia;
+    if (!estavaVazia) return;
+    const mudouEstado = estadoInicialOS && estadoFormularioOS() === estadoInicialOS;
+    canvas.width = largura;
+    canvas.height = 150;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    assinaturaVazia = canvas.toDataURL();
+    if (mudouEstado) estadoInicialOS = estadoFormularioOS();
+}
+function configurarEtapasOS() {
+    document.querySelectorAll('#osStepper button').forEach(b => b.addEventListener('click', () => irEtapaOS(Number(b.dataset.step))));
+    document.getElementById('osForm').addEventListener('input', e => {
+        if (e.target.classList.contains('is-invalid') && String(e.target.value).trim()) e.target.classList.remove('is-invalid');
     });
 }
 
@@ -769,7 +907,7 @@ function estadoFormularioOS() {
 function abrirModalOS() {
     const modal = document.getElementById('osModal');
     modal.style.display = 'flex';
-    modal.querySelector('.modal-card').scrollTop = 0;
+    irEtapaOS(0);
     estadoInicialOS = estadoFormularioOS();
 }
 
@@ -804,8 +942,10 @@ function descartarFormularioOS() {
     mostrarAbaReparo('pecas');
     document.getElementById('editDocId').value = '';
     document.getElementById('editOSId').value = '';
-    document.getElementById('modalTitle').innerText = "Criar Ordem de Serviço";
-    document.getElementById('btnSaveOS').innerText = "Salvar Ordem de Serviço";
+    document.getElementById('modalTitle').innerText = 'Nova ordem de serviço';
+    document.getElementById('btnSaveOS').innerText = 'Salvar OS';
+    document.querySelectorAll('#osForm .is-invalid').forEach(c => c.classList.remove('is-invalid'));
+    document.querySelectorAll('#osStepper li').forEach(li => li.classList.remove('has-error'));
     estadoInicialOS = '';
     focoAntesDoDescarteOS = null;
 }
@@ -1074,7 +1214,7 @@ function imprimirCupom(osId) {
     const printSection = document.getElementById('printSection');
     printSection.innerHTML = `
         <div style="font-family: Arial, sans-serif; width: 100%; max-width: 300px; margin: 0 auto; color: #000;">
-            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#phone"></use></svg> OFICINA DO CELULAR</h2>
+            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=6#phone"></use></svg> OFICINA DO CELULAR</h2>
             <p style="text-align: center; margin: 2px 0; font-size: 12px;">ORDEM DE SERVIÇO</p>
             <p style="text-align: center; font-size: 11px; margin-bottom: 5px;">Data: ${os.data}</p>
             <hr style="border-top: 1px dashed #000; margin: 5px 0;">
@@ -1134,5 +1274,5 @@ function imprimirEtiqueta(osId) {
     setTimeout(() => { window.print(); }, 300);
 }
 
-window.onload = function() { configurarCatalogos(); checarSessao(); };
+window.onload = function() { configurarCatalogos(); configurarEtapasOS(); checarSessao(); };
 
