@@ -1,9 +1,9 @@
-const CACHE_NAME = 'oficina-os-cache-v10-visual';
+const CACHE_NAME = 'oficina-os-cache-v11-icones';
 const urlsToCache = [
   'index.html',
   'style.css',
-  'redesign.css?v=5',
-  'icons.svg?v=4',
+  'redesign.css?v=6',
+  'icons.svg?v=5',
   'app-icon-192.png',
   'app-icon-512.png',
   'script.js?v=5',

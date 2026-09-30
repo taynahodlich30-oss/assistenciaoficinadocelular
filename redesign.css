@@ -512,8 +512,6 @@ input:focus,select:focus,textarea:focus { border-color: #9ce9ab; box-shadow: 0 0
 .fin-lucro { color: #9ef4ac !important; }
 
 /* Botão de pesquisa no mesmo estilo dos outros atalhos */
-.action-bar .btn-search-action { min-height: 46px; border-radius: 14px; border: 1px solid #3a5a45; background: linear-gradient(145deg,#1f3025,#131d17); color: #e6f8ea; font-weight: 700; box-shadow: 0 10px 22px #0004, inset 0 1px #ffffff12; }
-.action-bar .btn-search-action:hover { border-color: #8cdea1; }
 
 /* Seções mais arejadas */
 .dashboard-section-title, .list-heading { margin-top: 30px; }
@@ -530,3 +528,33 @@ input:focus,select:focus,textarea:focus { border-color: #9ce9ab; box-shadow: 0 0
   .fin-card .fin-value { font-size: 17px; }
   .dashboard-section-title, .list-heading { margin-top: 24px; }
 }
+
+/* ===== Ícones unificados v5 ===== */
+.ui-icon { stroke-width: 1.75; }
+.action-bar .btn-search-action { background: linear-gradient(145deg,#213027,#1b2720); color: #ecf9ef; border: 1px solid #3f6247; border-radius: 14px; font-size: 13px; box-shadow: 0 5px 0 #101e14,0 12px 24px #0004; }
+.side-nav button .ui-icon, .action-bar button .action-icon, .metric-card .metric-icon { color: #b5edc0; }
+.oc-tile { --tc: #9ef4ac; display: inline-grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 12px; color: var(--tc); background: color-mix(in srgb, var(--tc) 13%, #13201a); border: 1px solid color-mix(in srgb, var(--tc) 38%, transparent); box-shadow: inset 0 1px #ffffff14; }
+.oc-tile .ui-icon { width: 21px; height: 21px; }
+
+/* Pesquisa de aparelho no mesmo tema do painel */
+#deviceSearchModal .device-search-card { background: linear-gradient(160deg,#1c2c24,#111b16 65%) !important; border-color: #3a5a45 !important; }
+#deviceSearchModal .device-search-head .oc-tile { width: 50px; height: 50px; border-radius: 14px; }
+#deviceSearchModal .device-search-head .oc-tile .ui-icon { width: 25px; height: 25px; }
+#deviceSearchModal .device-search-head .btn-close { display: grid; place-items: center; background: #1f3025 !important; border: 1px solid #3a5a45; color: #cfe9d6 !important; padding: 0; }
+#deviceSearchModal .device-search-head .btn-close .ui-icon { width: 18px; height: 18px; }
+#deviceSearchModal .device-search-row input, #deviceSearchModal .device-search-row select { background: #0f1814 !important; border-color: #3a5a45 !important; }
+#deviceSearchModal .device-search-row input:focus { border-color: #8cdea1 !important; box-shadow: 0 0 0 3px #8cdea133 !important; }
+#deviceSearchModal .device-result { background: linear-gradient(180deg,#18251e,#121c17) !important; border-color: #2f4a3a !important; }
+#deviceSearchModal .device-result:hover { border-color: #8cdea1 !important; }
+#deviceSearchModal .oc-code { background: #0f1814; border-color: #2f4a3a; color: #a6efc1; }
+#deviceSearchModal .device-empty { border-color: #3a5a45; }
+#deviceSearchModal .device-empty .oc-tile { display: grid; margin: 0 auto 10px; width: 52px; height: 52px; }
+#deviceSearchModal .device-search-tools button, #deviceSearchModal .device-search-tools a { background: #1f3025 !important; border: 1px solid #3a5a45; color: #e6f8ea; font-size: 12px; }
+#deviceSearchModal .device-search-tools button:hover, #deviceSearchModal .device-search-tools a:hover { border-color: #8cdea1; }
+#deviceSearchModal .device-search-tools .ui-icon { width: 16px; height: 16px; }
+.dm-suggest .oc-tile { width: 34px; height: 34px; border-radius: 10px; }
+.dm-suggest .oc-tile .ui-icon { width: 17px; height: 17px; }
+#deviceSearchModal, #deviceSearchModal input, #deviceSearchModal select, #deviceSearchModal button { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+#deviceSearchModal a:not(.device-search-tools a), #deviceSearchModal .dm-note a { color: #9ef4ac; }
+#deviceSearchModal input[type="search"]::-webkit-search-cancel-button { filter: hue-rotate(250deg) saturate(.6); }
+@media (min-width: 701px) { .dashboard-main .action-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

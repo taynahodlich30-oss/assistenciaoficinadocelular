@@ -94,12 +94,10 @@
   const pareceImei = v => /^\d{14,15}$/.test(String(v || '').replace(/[\s-]/g, ''));
   const pareceCodigo = v => /^[A-Za-z0-9-]{5,}$/.test(v) && /\d/.test(v);
   const COR = { Xiaomi: '#fb923c', Samsung: '#60a5fa', Motorola: '#22d3ee', Apple: '#cbd5e1', Realme: '#facc15' };
-  const S = '<svg class="oc3d" viewBox="0 0 48 48" aria-hidden="true"><ellipse cx="24" cy="44" rx="13" ry="2.5" fill="#000" opacity=".32"/>';
-  const ICONE = {
-    lupa: S + '<rect x="29" y="27" width="7" height="17" rx="3.5" transform="rotate(-45 32.5 35.5)" fill="url(#ocDark)"/><circle cx="20" cy="20" r="14" fill="url(#ocBlue)"/><circle cx="20" cy="20" r="9.5" fill="#0b1f3a"/><circle cx="20" cy="20" r="9.5" fill="url(#ocShade)"/><path d="M12.5 16a9 9 0 0 1 7-5" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".85"/></svg>',
-    camera: S + '<rect x="5" y="14" width="38" height="26" rx="7" fill="url(#ocPurple)"/><path d="M17 14l3-5h8l3 5z" fill="url(#ocDark)"/><circle cx="24" cy="27" r="9" fill="url(#ocDark)"/><circle cx="24" cy="27" r="6" fill="url(#ocBlue)"/><circle cx="21.5" cy="24.5" r="2" fill="#fff" opacity=".8"/></svg>'
-  };
-  const iconeAparelho = marca => S + '<rect x="14" y="6" width="22" height="38" rx="6" fill="#0b1329"/><rect x="12" y="4" width="22" height="38" rx="6" fill="url(#ocDark)"/><rect x="14.2" y="6.5" width="17.6" height="29" rx="3.5" fill="currentColor" style="color:' + (COR[marca] || '#38bdf8') + '"/><rect x="14.2" y="6.5" width="17.6" height="29" rx="3.5" fill="url(#ocShade)"/><path d="M14.2 10a3.5 3.5 0 0 1 3.5-3.5H27L14.2 22z" fill="#fff" opacity=".28"/><rect x="20" y="38.4" width="6" height="1.6" rx=".8" fill="#94a3b8"/></svg>';
+  const ic = id => '<svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#' + id + '"></use></svg>';
+  const ICONE = { lupa: ic('search'), camera: ic('camera'), lista: ic('list'), web: ic('globe'), fechar: ic('close') };
+  const tile = (id, cor) => '<span class="oc-tile"' + (cor ? ' style="--tc:' + cor + '"' : '') + '>' + ic(id) + '</span>';
+  const iconeAparelho = marca => tile('phone', COR[marca] || '#9ef4ac');
   const aviso = msg => { if (typeof avisar === 'function') avisar(msg); };
 
   /* ===== 3. BUSCA ===== */
@@ -356,7 +354,7 @@
     if (web) web.href = q ? linkWeb(q) : '#';
     $('deviceSearchResults').innerHTML = lista.length
       ? lista.map((x, i) => '<article class="device-result">' + iconeAparelho(x.brand) + '<div><strong>' + esc(nome(x)) + '</strong><small>Código técnico: <code class="oc-code">' + esc(codigosCurtos(x)) + '</code></small>' + (x.info ? '<small>Observação: ' + esc(x.info) + '</small>' : '') + '<small>Fonte: ' + esc(x.fonte || '') + '</small></div><button type="button" data-i="' + i + '">Usar na OS</button></article>').join('')
-      : '<div class="device-empty">' + ICONE.lupa + 'Nenhum modelo encontrado. Use “Pesquisar na internet” para consultar outros códigos.</div>';
+      : '<div class="device-empty">' + tile('search') + 'Nenhum modelo encontrado. Use “Pesquisar na internet” para consultar outros códigos.</div>';
   };
   window.usarAparelhoNaOS = function (ref) {
     const x = typeof ref === 'object' ? ref : todos().find(i => i.codes.includes(ref));
@@ -405,7 +403,13 @@
       document.body.appendChild(d);
     }
     const cab = document.querySelector('#deviceSearchModal .device-search-head');
-    if (cab && !cab.querySelector('.oc3d')) cab.insertAdjacentHTML('afterbegin', ICONE.lupa);
+    if (cab && !cab.querySelector('.oc-tile')) cab.insertAdjacentHTML('afterbegin', tile('phone-search'));
+    const fechar = cab && cab.querySelector('.btn-close');
+    if (fechar) { fechar.innerHTML = ICONE.fechar; fechar.setAttribute('aria-label', 'Fechar pesquisa'); }
+    const listaBtn = document.querySelector('#deviceSearchModal .device-search-tools button:not(.photo)');
+    if (listaBtn && !listaBtn.querySelector('svg')) listaBtn.insertAdjacentHTML('afterbegin', ICONE.lista);
+    const webLink = $('deviceSearchWeb');
+    if (webLink && !webLink.querySelector('svg')) webLink.insertAdjacentHTML('afterbegin', ICONE.web);
     const fotoBtn = document.querySelector('#deviceSearchModal .device-search-tools .photo');
     if (fotoBtn) fotoBtn.innerHTML = ICONE.camera + '<span>Tentar por foto</span>';
     const res = $('deviceSearchResults');
@@ -436,7 +440,7 @@
       b.id = 'deviceSearchButton';
       b.type = 'button';
       b.className = 'btn-search-action';
-      b.innerHTML = ICONE.lupa + '<span>Pesquisar modelo</span>';
+      b.innerHTML = '<span class="action-icon">' + ICONE.lupa + '</span><span>Pesquisar modelo</span>' + ic('arrow').replace('ui-icon', 'ui-icon action-arrow');
       b.onclick = window.abrirPesquisaAparelho;
       barra.appendChild(b);
     }

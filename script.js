@@ -299,7 +299,7 @@ function renderizarEstoque() {
                 <strong class="stock-name">${item.nome}</strong><br>
                 <small>Fornecedor: <b class="stock-supplier">${item.fornecedor || 'Não especificado'}</b> | Qtd: ${item.qtd} un | ${formatarBRL(item.custo)}</small>
             </div>
-            ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#alert"></use></svg> Baixo</span>' : ''}
+            ${item.qtd <= 2 ? '<span style="color:#f87171; font-size:11px; font-weight:bold;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#alert"></use></svg> Baixo</span>' : ''}
         `;
         list.appendChild(div);
     });
@@ -521,8 +521,8 @@ function atualizarPainel() {
     document.getElementById('resultsCount').textContent = `${quantidade} ${quantidade === 1 ? 'ordem encontrada' : 'ordens encontradas'} de ${ordensServico.length}`;
     if (!quantidade) {
         osList.innerHTML = ordensServico.length
-            ? '<div class="empty-state"><span class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#search"></use></svg></span><h3>Nenhuma ordem encontrada</h3><p>Tente outro nome, aparelho ou ajuste os filtros.</p><button type="button" class="empty-action" onclick="limparFiltros()">Limpar filtros</button></div>'
-            : '<div class="empty-state"><span class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#clipboard"></use></svg></span><h3>Sua primeira ordem começa aqui</h3><p>Cadastre um aparelho para acompanhar o atendimento do início à entrega.</p><button type="button" class="empty-action" onclick="abrirModalOS()">Criar primeira ordem</button></div>';
+            ? '<div class="empty-state"><span class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#search"></use></svg></span><h3>Nenhuma ordem encontrada</h3><p>Tente outro nome, aparelho ou ajuste os filtros.</p><button type="button" class="empty-action" onclick="limparFiltros()">Limpar filtros</button></div>'
+            : '<div class="empty-state"><span class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#clipboard"></use></svg></span><h3>Sua primeira ordem começa aqui</h3><p>Cadastre um aparelho para acompanhar o atendimento do início à entrega.</p><button type="button" class="empty-action" onclick="abrirModalOS()">Criar primeira ordem</button></div>';
     }
 
     ordensFiltradas.forEach((os) => {
@@ -557,16 +557,16 @@ function atualizarPainel() {
                 ${fotosHTML}
             </div></details>
             <div class="os-card-actions">
-                <button type="button" class="btn-sm btn-edit" data-os-action="editar"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#edit"></use></svg> Editar OS</button>
-                <button type="button" class="btn-sm btn-wa-orcamento" data-os-action="orcamento"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#clock"></use></svg> Orçamento</button>
-                <button type="button" class="btn-sm btn-wa-pronto" data-os-action="pronto"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#send"></use></svg> Avisar pronto</button>
+                <button type="button" class="btn-sm btn-edit" data-os-action="editar"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#edit"></use></svg> Editar OS</button>
+                <button type="button" class="btn-sm btn-wa-orcamento" data-os-action="orcamento"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#clock"></use></svg> Orçamento</button>
+                <button type="button" class="btn-sm btn-wa-pronto" data-os-action="pronto"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#send"></use></svg> Avisar pronto</button>
             </div>
-            <details class="os-card-more"><summary>Mais ações <svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#arrow"></use></svg></summary><div class="os-card-subactions">
-                <button type="button" class="btn-sm btn-wa-aprovado" data-os-action="aprovado"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#check"></use></svg> Avisar aprovação</button>
-                <button type="button" class="btn-sm btn-wa-comprovante" data-os-action="garantia"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#shield"></use></svg> Enviar garantia</button>
-                <button type="button" class="btn-sm" data-os-action="imprimir"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#print"></use></svg> Imprimir OS</button>
-                <button type="button" class="btn-sm" data-os-action="etiqueta"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#tag"></use></svg> Imprimir etiqueta</button>
-                <button type="button" class="btn-sm btn-delete" data-os-action="excluir"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#trash"></use></svg> Excluir OS</button>
+            <details class="os-card-more"><summary>Mais ações <svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#arrow"></use></svg></summary><div class="os-card-subactions">
+                <button type="button" class="btn-sm btn-wa-aprovado" data-os-action="aprovado"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#check"></use></svg> Avisar aprovação</button>
+                <button type="button" class="btn-sm btn-wa-comprovante" data-os-action="garantia"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#shield"></use></svg> Enviar garantia</button>
+                <button type="button" class="btn-sm" data-os-action="imprimir"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#print"></use></svg> Imprimir OS</button>
+                <button type="button" class="btn-sm" data-os-action="etiqueta"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#tag"></use></svg> Imprimir etiqueta</button>
+                <button type="button" class="btn-sm btn-delete" data-os-action="excluir"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#trash"></use></svg> Excluir OS</button>
             </div></details>
         `;
         card.querySelector('.status-select').addEventListener('change', event => alterarStatusOS(os.idOS, event.target.value));
@@ -1074,7 +1074,7 @@ function imprimirCupom(osId) {
     const printSection = document.getElementById('printSection');
     printSection.innerHTML = `
         <div style="font-family: Arial, sans-serif; width: 100%; max-width: 300px; margin: 0 auto; color: #000;">
-            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=4#phone"></use></svg> OFICINA DO CELULAR</h2>
+            <h2 style="text-align: center; margin: 0; font-size: 16px;"><svg class="ui-icon" aria-hidden="true"><use href="icons.svg?v=5#phone"></use></svg> OFICINA DO CELULAR</h2>
             <p style="text-align: center; margin: 2px 0; font-size: 12px;">ORDEM DE SERVIÇO</p>
             <p style="text-align: center; font-size: 11px; margin-bottom: 5px;">Data: ${os.data}</p>
             <hr style="border-top: 1px dashed #000; margin: 5px 0;">
