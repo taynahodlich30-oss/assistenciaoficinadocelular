@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const MINUTOS = 3;                       // tempo parado até a tela de descanso aparecer
-  const VIDEO = 'descanso.mp4?v=1';
+  const VIDEO = 'descanso.mp4?v=2';
   let timer = null, ativo = false, tela = null, video = null, liberadoEm = 0;
 
   const css = document.createElement('style');
