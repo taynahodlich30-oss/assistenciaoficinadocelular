@@ -1,11 +1,11 @@
-const CACHE_NAME = 'oficina-os-cache-v13-recursos';
+const CACHE_NAME = 'oficina-os-cache-v14-retirada';
 const urlsToCache = [
   'index.html',
-  'app.css?v=2',
+  'app.css?v=3',
   'icons.svg?v=7',
   'app-icon-192.png',
   'app-icon-512.png',
-  'script.js?v=7',
+  'script.js?v=8',
   'recursos.js?v=1',
   'garantia.html',
   'acompanhe.html',

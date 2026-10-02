@@ -581,3 +581,10 @@ input[type="search"]::-webkit-search-cancel-button { filter: grayscale(1) bright
   .tl-dot { top: 2px; }
   .tl-item::after { left: 5px; right: auto; top: 16px; bottom: -12px; width: 1px; height: auto; }
 }
+
+/* Retirada do aparelho */
+.retirada-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding: 10px 12px; border-radius: var(--r); border: 1px solid #fbbf2440; background: #fbbf2412; color: var(--warn); font-size: 13.5px; }
+.retirada-line > span { flex: 1; min-width: 160px; color: var(--text-2); }
+.retirada-line b { color: var(--text); }
+.retirada-line .btn-sm { margin-top: 0; }
+.retirada-line.is-done { border-color: #86efac40; background: #86efac12; color: var(--ok); }

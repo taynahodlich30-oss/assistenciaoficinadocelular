@@ -366,6 +366,22 @@ function verificarHistoricoCliente() {
     }
 }
 
+/* Registra que o cliente já buscou o aparelho (sai de "Prontos" e de "Aparelhos esquecidos") */
+async function marcarRetirado(osId, retirado = true) {
+    const os = ordensServico.find(item => item.idOS === osId);
+    if (!os) return;
+    if (!retirado && !confirm(`Desfazer a retirada da ${osId}? Ela volta para "Prontos para retirada".`)) return;
+    const valor = retirado ? new Date().toISOString() : null;
+    try {
+        if (!db || !os.idDoc) throw new Error('OS sem vínculo com Firebase');
+        await db.collection('ordens_servico').doc(os.idDoc).update({ retiradoEm: valor });
+    } catch (e) { avisar('Não foi possível salvar a retirada. Tente novamente.', true); return; }
+    if (valor) os.retiradoEm = valor; else delete os.retiradoEm;
+    localStorage.setItem('oficina_os_db', JSON.stringify(ordensServico));
+    atualizarPainel();
+    avisar(retirado ? `${osId} marcada como retirada.` : `${osId} voltou para "Prontos para retirada".`);
+}
+
 async function alterarStatusOS(osId, novoStatus) {
     const os = ordensServico.find(item => item.idOS === osId);
     if (os) {
@@ -537,7 +553,7 @@ function textoDias(n) { return n === 0 ? 'hoje' : n === 1 ? 'há 1 dia' : `há $
 function saldoAReceber(os) { return Math.max(0, Number(os.valor || 0) - valorEfetivamenteRecebido(os)); }
 
 function atualizarAtencao() {
-    const prontos = ordensServico.filter(os => os.status === 'Pronto' && !os.garantiaToken); // garantia enviada = aparelho entregue
+    const prontos = ordensServico.filter(os => os.status === 'Pronto' && !os.garantiaToken && !os.retiradoEm); // retirado ou garantia enviada = aparelho entregue
     const orcamentos = ordensServico.filter(os => os.status === 'Em orçamento');
     const parados = orcamentos.filter(os => diasDesdeData(dataDaEtapa(os, 'Em orçamento')) >= 2);
     const pendentes = ordensServico.filter(os => os.statusPagamento !== 'Pago' && saldoAReceber(os) > 0);
@@ -654,6 +670,9 @@ function atualizarPainel() {
                     ${fotosHTML}
                     <div class="full"><dt>Linha do tempo</dt><dd>${linhaDoTempoHTML(os)}</dd></div>
                 </dl>
+                ${os.status === 'Pronto' ? `<div class="retirada-line${os.retiradoEm ? ' is-done' : ''}">${os.retiradoEm
+                    ? `${ICO('check')}<span><b>Aparelho retirado</b> em ${escaparHtml(new Date(os.retiradoEm).toLocaleDateString('pt-BR'))}</span><button type="button" class="btn btn-ghost btn-sm" data-os-action="retirado">Desfazer</button>`
+                    : `${ICO('clock')}<span><b>Aguardando o cliente buscar</b></span><button type="button" class="btn btn-primary btn-sm" data-os-action="retirado">${ICO('check')} Marcar como retirado</button>`}</div>` : ''}
                 <div class="os-actions" style="margin-top:14px">
                     <button type="button" class="btn btn-secondary" data-os-action="editar">${ICO('edit')} Editar</button>
                     <button type="button" class="btn btn-wa" data-os-action="orcamento">${ICO('send')} Orçamento</button>
@@ -679,7 +698,8 @@ function atualizarPainel() {
             copiarlink: () => copiarLinkAcompanhamento(os.idOS),
             imprimir: () => imprimirCupom(os.idOS),
             etiqueta: () => imprimirEtiqueta(os.idOS),
-            excluir: () => excluirOS(os.idOS)
+            excluir: () => excluirOS(os.idOS),
+            retirado: () => marcarRetirado(os.idOS, !os.retiradoEm)
         };
         linha.querySelectorAll('[data-os-action]').forEach(botao => botao.addEventListener('click', acoes[botao.dataset.osAction]));
         osList.appendChild(linha);

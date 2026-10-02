@@ -23,8 +23,10 @@
     '.forgot-btn{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:var(--r-sm);border:1px solid #1f6b44;background:#123424;color:#b7f7cf;font-size:13px;font-weight:700}' +
     '.forgot-btn:hover{background:#164430}.forgot-btn .ui-icon{width:16px;height:16px}' +
     '.forgot-nophone{font-size:12px;color:var(--muted)}' +
+    '.forgot-done{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px;border-radius:var(--r-sm);border:1px solid var(--line-strong);color:var(--text-2);font-size:13px;font-weight:700}' +
+    '.forgot-done:hover{color:var(--text);background:var(--surface-2)}.forgot-done .ui-icon{width:16px;height:16px}' +
     '.forgot-prazo{color:var(--accent);font-size:12.5px;font-weight:600;text-decoration:underline;margin-left:8px}' +
-    '@media(max-width:760px){.forgot-row{flex-wrap:wrap}.forgot-btn{width:100%;justify-content:center}#esquecidosSection .section-head .section-note{display:inline}}';
+    '@media(max-width:760px){.forgot-row{flex-wrap:wrap}.forgot-btn,.forgot-done{flex:1 1 45%;justify-content:center}#esquecidosSection .section-head .section-note{display:inline}}';
   document.head.appendChild(css);
 
   const esc = s => (typeof escaparHtml === 'function' ? escaparHtml(s) : String(s ?? ''));
@@ -63,7 +65,7 @@
     let sec = document.getElementById('esquecidosSection');
     const limite = diasLimite();
     const lista = ordensServico
-      .filter(os => os.status === 'Pronto' && !os.garantiaToken && diasParado(os) >= limite)
+      .filter(os => os.status === 'Pronto' && !os.garantiaToken && !os.retiradoEm && diasParado(os) >= limite)
       .sort((a, b) => diasParado(b) - diasParado(a));
     if (!lista.length) { if (sec) sec.remove(); return; }
     if (!sec) {
@@ -81,7 +83,8 @@
           '<small>' + esc(os.idOS) + (desde ? ' · pronto desde ' + desde.toLocaleDateString('pt-BR') : '') + ' · ' + brl(os.valor) + '</small>' +
           '<small class="forgot-last">' + quando(os) + '</small></div>' +
           (telefone(os) ? '<button type="button" class="forgot-btn" data-lembrar="' + esc(os.idDoc) + '">' + icone('whatsapp') + ' Lembrar cliente</button>'
-                        : '<span class="forgot-nophone">Sem WhatsApp na OS</span>') + '</div>';
+                        : '<span class="forgot-nophone">Sem WhatsApp na OS</span>') +
+          '<button type="button" class="forgot-done" data-retirado="' + esc(os.idOS) + '">' + icone('check') + ' Já foi retirado</button></div>';
       }).join('') + '</div>';
   }
 
@@ -93,6 +96,12 @@
       if (!(n >= 1 && n <= 365)) { alert('Digite um número de 1 a 365.'); return; }
       localStorage.setItem(CHAVE_DIAS, String(n));
       desenhar();
+      return;
+    }
+    const r = e.target.closest('[data-retirado]');
+    if (r) {
+      if (!confirm('Confirmar que o cliente já buscou o aparelho da ' + r.dataset.retirado + '?')) return;
+      if (typeof marcarRetirado === 'function') await marcarRetirado(r.dataset.retirado, true);
       return;
     }
     const b = e.target.closest('[data-lembrar]');
